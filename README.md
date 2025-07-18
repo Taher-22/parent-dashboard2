@@ -30,14 +30,17 @@ This repository contains the ongoing development of an inclusive educational gam
 
 ## 👥 Contributors
 Graduation project team at Nile University, supervised by academic mentors.
-Supervised by: Dr. Noha Gamaleldin
-Team Leader: Mohamed Nasr
-Team Members: 
-Mahytab Ayman
-Ali Salah
-Mahmoud Taher
-Merna Samir
-Nirvana Nader
+
+# Supervised by: Dr. Noha Gamaleldin
+
+# Team Leader: Mohamed Nasr
+
+# Team Members: 
+- Mahytab Ayman
+- Ali Salah
+- Merna Samir
+- Nirvana Nader
+- Mahmoud Taher
 ---
 
 © Nile University Graduation Project Team, NasrrTM
