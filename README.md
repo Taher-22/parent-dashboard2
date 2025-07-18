@@ -17,11 +17,10 @@ This repository contains the ongoing development of an inclusive educational gam
 - **Version Control**: Git (structured branches for development, research, art-assets, and documentation)
 
 ## 📂 Repository Structure
-- `development`: Core gameplay logic and mechanics.
+- `main`: Full gameplay prototype versions.
+- `dev`: Core gameplay logic and mechanics.
 - `research`: AI integration, educational methodologies, and accessibility research.
 - `art-assets`: 3D models, UI designs, and animations.
-- `docs`: Project documentation, reports, and meeting notes.
-- `test-bed`: Experimental features and integrations.
 
 ## 🎯 Project Goals
 - Promote inclusive education through gaming.
