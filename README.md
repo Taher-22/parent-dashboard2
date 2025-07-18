@@ -36,11 +36,11 @@ Graduation project team at Nile University, supervised by academic mentors.
 # Team Leader: Mohamed Nasr
 
 # Team Members: 
-- Mahytab Ayman
-- Ali Salah
-- Merna Samir
-- Nirvana Nader
-- Mahmoud Taher
+# Mahytab Ayman
+# Ali Salah
+# Merna Samir
+# Nirvana Nader
+# Mahmoud Taher
 ---
 
 © Nile University Graduation Project Team, NasrrTM
