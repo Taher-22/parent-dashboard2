@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"  
+  url      = env("DATABASE_URL")  // Using environment variable for the DB URL
+}
+
+enum Role {
+  PARENT
+  TEACHER
+}
+
+model Parent {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PARENT)
+
+  children     Child[]  // Relationship with Child model
+  createdAt    DateTime @default(now())
+}
+
+model Child {
+  id            String   @id @default(cuid())
+  displayName   String
+  birthdate     DateTime?
+  coins         Int      @default(0)
+
+  parentId      String
+  parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  subjects      SubjectProgress[] // Relationship with SubjectProgress
+  rewards       Reward[]          // Relationship with Reward
+  timeControls  TimeControls?     // Relationship with TimeControls
+
+  createdAt     DateTime @default(now())
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String   // Math, Astronomy, etc.
+
+  progress    SubjectProgress[] // Relationship with SubjectProgress
+}
+
+model SubjectProgress {
+  id           String   @id @default(cuid())
+
+  childId      String
+  child        Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  timeSpentSec Int      @default(0)
+  completion   Float    @default(0) // 0–100%
+  lastPlayedAt DateTime?
+
+  @@unique([childId, subjectId])
+}
+
+model Reward {
+  id        String   @id @default(cuid())
+  type      String   // badge, coin, level, etc.
+  value     Int
+
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model TimeControls {
+  id            String   @id @default(cuid())
+  dailyMinutes  Int
+  allowedFrom   String?  // "16:00"
+  allowedTo     String?  // "18:00"
+
+  childId       String   @unique
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+}
