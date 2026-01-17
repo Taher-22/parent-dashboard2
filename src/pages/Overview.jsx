@@ -24,30 +24,27 @@ export default function Overview() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🔐 AUTH CHECK
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
-    if (!token) {
-      console.warn("❌ No token found");
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  getMe(token)
+    .then((user) => {
+      setAuth(user); // ✅ FIX
+    })
+    .catch(() => {
+      localStorage.removeItem("token");
       navigate("/login");
-      return;
-    }
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+}, [navigate]);
 
-    getMe(token)
-      .then((data) => {
-        console.log("✅ Auth OK:", data);
-        setAuth(data.auth);
-      })
-      .catch((err) => {
-        console.error("❌ Auth failed:", err.message);
-        localStorage.removeItem("token");
-        navigate("/login");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [navigate]);
 
   if (loading) {
     return (
