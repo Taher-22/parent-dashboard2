@@ -6,9 +6,17 @@ import { requireAuth } from "./auth/auth.middleware.js";
 
 const app = express();
 
-app.use(cors({
-  origin: "*", // frontend domain allowed
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// 🔥 THIS LINE IS CRITICAL
+app.options("*", cors());
+
 
 app.use(express.json());
 
