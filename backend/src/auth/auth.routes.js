@@ -5,7 +5,9 @@ import { authMiddleware } from "./auth.middleware.js";
 
 const router = express.Router();
 
-/* REGISTER */
+/* =========================
+   REGISTER
+========================= */
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -30,14 +32,24 @@ router.post("/register", async (req, res) => {
     });
 
     const token = generateToken(parent);
-    res.json({ token });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,        // REQUIRED on HTTPS
+      sameSite: "none",    // REQUIRED for cross-site
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(201).json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-/* LOGIN */
+/* =========================
+   LOGIN
+========================= */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -56,14 +68,24 @@ router.post("/login", async (req, res) => {
     }
 
     const token = generateToken(parent);
-    res.json({ token });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,        // REQUIRED on HTTPS
+      sameSite: "none",    // REQUIRED for cross-site
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-/* ME (protected) */
+/* =========================
+   ME (PROTECTED)
+========================= */
 router.get("/me", authMiddleware, (req, res) => {
   res.json(req.user);
 });

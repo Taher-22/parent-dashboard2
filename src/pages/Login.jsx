@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "../lib/api";
+import { login, getMe } from "../lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -8,27 +8,39 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  /* =========================
+     Auto-redirect if already logged in
+  ========================= */
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) navigate("/overview");
+    async function checkAuth() {
+      try {
+        await getMe(); // checks cookie-based auth
+        navigate("/overview");
+      } catch {
+        // not logged in → stay on login page
+      }
+    }
+    checkAuth();
   }, [navigate]);
 
+  /* =========================
+     Handle Login
+  ========================= */
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     try {
-      const data = await login(email, password);
-      localStorage.setItem("token", data.token);
+      await login(email, password); // cookie is set by backend
       navigate("/overview");
-    } catch {
-      setError("Invalid email or password");
+    } catch (err) {
+      setError(err.message || "Invalid email or password");
     }
   }
 
   return (
     <div className="adapted-bg flex items-center justify-center px-4">
-      {/* Dark blobs */}
+      {/* Background visuals */}
       <div className="shape one" />
       <div className="shape two" />
       <div className="shape three" />

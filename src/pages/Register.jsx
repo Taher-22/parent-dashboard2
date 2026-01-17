@@ -7,25 +7,30 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+ async function handleSubmit(e) {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await fetch("http://localhost:5050/api/auth/register", {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/auth/register`,
+      {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      });
+      }
+    );
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok) navigate("/login");
-      else setError(data.error || "Registration failed");
-    } catch (err) {
-      setError("Network error: " + err.message);
-    }
+    if (res.ok) navigate("/login");
+    else setError(data.error || "Registration failed");
+  } catch (err) {
+    setError("Network error: " + err.message);
   }
+}
+
 
   return (
     <div

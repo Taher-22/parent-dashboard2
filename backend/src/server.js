@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./auth/auth.routes.js";
 import { requireAuth } from "./auth/authMiddleware.js";
+import cookieParser from "cookie-parser";
+
+app.use(cookieParser());
+
 
 const app = express();
 
