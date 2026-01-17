@@ -8,7 +8,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  /* Auto redirect if token exists */
+  // Auto redirect if token exists
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) navigate("/overview");
@@ -20,22 +20,13 @@ export default function Login() {
 
     try {
       await login(email, password);
-      navigate("/overview"); // ✅ GOES TO OVERVIEW
+      navigate("/overview");
     } catch {
       setError("Invalid email or password");
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* your UI stays exactly the same */}
-    </form>
-  );
-}
-
-
-
-
+  // ✅ SINGLE RETURN — INSIDE THE COMPONENT
   return (
     <div className="adapted-bg flex items-center justify-center px-4">
       {/* Background visuals */}
@@ -135,4 +126,4 @@ export default function Login() {
       </div>
     </div>
   );
-
+}
