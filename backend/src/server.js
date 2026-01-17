@@ -6,17 +6,14 @@ import { requireAuth } from "./auth/auth.middleware.js";
 
 const app = express();
 
+// ✅ SIMPLE, SAFE CORS (ENOUGH FOR JSON + AUTH HEADER)
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-
-// 🔥 THIS LINE IS CRITICAL
-app.options("*", cors());
-
 
 app.use(express.json());
 
