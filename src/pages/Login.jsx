@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login, getMe } from "../lib/api";
+import { login } from "../lib/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -8,35 +8,31 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  /* =========================
-     Auto-redirect if already logged in
-  ========================= */
+  /* Auto redirect if token exists */
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        await getMe(); // checks cookie-based auth
-        navigate("/overview");
-      } catch {
-        // not logged in → stay on login page
-      }
-    }
-    checkAuth();
+    const token = localStorage.getItem("token");
+    if (token) navigate("/overview");
   }, [navigate]);
 
-  /* =========================
-     Handle Login
-  ========================= */
-async function handleSubmit(e) {
-  e.preventDefault();
-  setError("");
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
 
-  try {
-    await login(email, password);
-    navigate("/overview");
-  } catch {
-    setError("Invalid email or password");
+    try {
+      await login(email, password);
+      navigate("/overview"); // ✅ GOES TO OVERVIEW
+    } catch {
+      setError("Invalid email or password");
+    }
   }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* your UI stays exactly the same */}
+    </form>
+  );
 }
+
 
 
 
@@ -139,4 +135,4 @@ async function handleSubmit(e) {
       </div>
     </div>
   );
-}
+

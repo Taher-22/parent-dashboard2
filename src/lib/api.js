@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = "https://parent-dashboard2-production.up.railway.app";
 
 /* REGISTER */
 export async function register(email, password) {
@@ -8,9 +8,8 @@ export async function register(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error);
-  localStorage.setItem("token", data.token);
+  if (!res.ok) throw new Error("Register failed");
+  return res.json();
 }
 
 /* LOGIN */
@@ -21,14 +20,21 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
+  if (!res.ok) throw new Error("Login failed");
+
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error);
+
+  // 🔥 STORE TOKEN
   localStorage.setItem("token", data.token);
+
+  return data;
 }
 
-/* ME */
+/* GET ME (PROTECTED) */
 export async function getMe() {
   const token = localStorage.getItem("token");
+
+  if (!token) throw new Error("No token");
 
   const res = await fetch(`${API_URL}/api/me`, {
     headers: {
@@ -37,5 +43,6 @@ export async function getMe() {
   });
 
   if (!res.ok) throw new Error("Unauthorized");
+
   return res.json();
 }

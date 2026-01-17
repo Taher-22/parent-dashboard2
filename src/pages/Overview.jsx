@@ -24,13 +24,28 @@ export default function Overview() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-useEffect(() => {
-  getMe()
-    .then(setAuth)
-    .catch(() => navigate("/login"))
-    .finally(() => setLoading(false));
-}, []);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
 
+    // 🔴 NO TOKEN → GO LOGIN
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    // 🔐 TOKEN EXISTS → VERIFY IT
+    getMe()
+      .then((data) => {
+        setAuth(data); // { user: {...} }
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        navigate("/login");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -40,6 +55,7 @@ useEffect(() => {
     );
   }
 
+  // ✅ AUTH CONFIRMED → RENDER PAGE
   return (
     <PageTransition>
       {/* HEADER */}
@@ -111,8 +127,7 @@ useEffect(() => {
               <motion.div
                 key={w.subject}
                 whileHover={{ x: 4 }}
-                className="rounded-xl p-3bg-black/5 dark:bg-white/10
-"
+                className="rounded-xl p-3 bg-black/5 dark:bg-white/10"
               >
                 <div className="flex justify-between">
                   <span className="font-semibold">{w.subject}</span>
@@ -134,8 +149,7 @@ useEffect(() => {
             {recentSessions.map((s) => (
               <div
                 key={s.id}
-                className="rounded-xl p-3bg-black/5 dark:bg-white/10
-"
+                className="rounded-xl p-3 bg-black/5 dark:bg-white/10"
               >
                 <div className="flex justify-between">
                   <span className="font-semibold">{s.game}</span>
@@ -152,4 +166,3 @@ useEffect(() => {
     </PageTransition>
   );
 }
-
