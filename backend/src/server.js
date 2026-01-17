@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./auth/auth.routes.js";
-import { requireAuth } from "./auth/authMiddleware.js";
+import { requireAuth } from "./auth/auth.middleware.js";
 
 const app = express();
 
