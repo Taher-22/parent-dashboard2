@@ -1,46 +1,44 @@
 import express from "express";
 import cors from "cors";
-import authRoutes from "./auth/auth.routes.js";
-import { requireAuth } from "./auth/authMiddleware.js";
 import cookieParser from "cookie-parser";
 
-app.use(cookieParser());
+import authRoutes from "./auth/auth.routes.js";
+import { requireAuth } from "./auth/authMiddleware.js";
 
+const app = express(); // ✅ MUST COME FIRST
 
-const app = express();
-
-/* ================================
-   CORS — SAFE FOR NODE 22
-================================ */
+// ✅ CORS (safe for Railway + Hostinger)
 app.use(
   cors({
-    origin: true,        // let browser send Origin
-    credentials: true,   // allow cookies
+    origin: true,
+    credentials: true,
   })
 );
 
-/* ================================
-   Middlewares
-================================ */
+// ✅ Middlewares AFTER app initialization
 app.use(express.json());
+app.use(cookieParser());
 
-/* ================================
-   Routes
-================================ */
+// ✅ Health check
 app.get("/", (req, res) => {
   res.send("EduGalaxy API running ✅");
 });
 
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 
-app.get("/api/overview", requireAuth, (req, res) => {
-  res.json({ todayFocusMinutes: 42 });
+app.get("/api/me", requireAuth, (req, res) => {
+  res.json(req.auth);
 });
 
-/* ================================
-   Start Server
-================================ */
-const PORT = 8080;
+app.get("/api/overview", requireAuth, (req, res) => {
+  res.json({
+    todayFocusMinutes: 42,
+  });
+});
+
+// ✅ Railway port handling
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log("API running on port", PORT);
+  console.log(`API running on port ${PORT}`);
 });
