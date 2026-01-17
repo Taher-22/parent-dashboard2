@@ -6,32 +6,14 @@ import { requireAuth } from "./auth/authMiddleware.js";
 const app = express();
 
 /* ================================
-   CORS (FIXED FOR PRODUCTION)
+   CORS — SAFE FOR NODE 22
 ================================ */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://neuroquest.tech",          // ✅ YOUR FRONTEND DOMAIN
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("CORS blocked"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: true,        // let browser send Origin
+    credentials: true,   // allow cookies
   })
 );
-
-/* ✅ THIS IS THE CRITICAL LINE */
-app.options("*", cors());
 
 /* ================================
    Middlewares
