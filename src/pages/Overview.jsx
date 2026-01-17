@@ -25,25 +25,11 @@ export default function Overview() {
   const navigate = useNavigate();
 
 useEffect(() => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    navigate("/login");
-    return;
-  }
-
-  getMe(token)
-    .then((user) => {
-      setAuth(user); // ✅ FIX
-    })
-    .catch(() => {
-      localStorage.removeItem("token");
-      navigate("/login");
-    })
-    .finally(() => {
-      setLoading(false);
-    });
-}, [navigate]);
+  getMe()
+    .then(setAuth)
+    .catch(() => navigate("/login"))
+    .finally(() => setLoading(false));
+}, []);
 
 
   if (loading) {
@@ -166,3 +152,4 @@ useEffect(() => {
     </PageTransition>
   );
 }
+

@@ -1,56 +1,41 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
-/* =========================
-   REGISTER
-========================= */
+/* REGISTER */
 export async function register(email, password) {
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
-    credentials: "include", // 🔴 REQUIRED
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 
   const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Register failed");
-  }
-
-  return data;
+  if (!res.ok) throw new Error(data.error);
+  localStorage.setItem("token", data.token);
 }
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 export async function login(email, password) {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
-    credentials: "include", // 🔴 REQUIRED
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 
   const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Login failed");
-  }
-
-  return data;
+  if (!res.ok) throw new Error(data.error);
+  localStorage.setItem("token", data.token);
 }
 
-/* =========================
-   GET CURRENT USER
-========================= */
+/* ME */
 export async function getMe() {
+  const token = localStorage.getItem("token");
+
   const res = await fetch(`${API_URL}/api/me`, {
-    credentials: "include", // 🔴 REQUIRED
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
-  if (!res.ok) {
-    throw new Error("Unauthorized");
-  }
-
+  if (!res.ok) throw new Error("Unauthorized");
   return res.json();
 }

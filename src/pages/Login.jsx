@@ -26,17 +26,19 @@ export default function Login() {
   /* =========================
      Handle Login
   ========================= */
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
+async function handleSubmit(e) {
+  e.preventDefault();
+  setError("");
 
-    try {
-      await login(email, password); // cookie is set by backend
-      navigate("/overview");
-    } catch (err) {
-      setError(err.message || "Invalid email or password");
-    }
+  try {
+    await login(email, password);
+    navigate("/overview");
+  } catch {
+    setError("Invalid email or password");
   }
+}
+
+
 
   return (
     <div className="adapted-bg flex items-center justify-center px-4">

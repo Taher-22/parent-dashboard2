@@ -13,12 +13,9 @@ export function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-
-    // ✅ SINGLE SOURCE OF TRUTH
     req.user = payload;
-
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
 }

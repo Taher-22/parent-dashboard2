@@ -1,23 +1,16 @@
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 
 import authRoutes from "./auth/auth.routes.js";
 import { requireAuth } from "./auth/auth.middleware.js";
 
 const app = express();
 
-app.set("trust proxy", 1); // 🔥 THIS FIXES EVERYTHING
-
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: "*", // frontend domain allowed
+}));
 
 app.use(express.json());
-app.use(cookieParser());
 
 app.get("/", (req, res) => {
   res.send("EduGalaxy API running ✅");
