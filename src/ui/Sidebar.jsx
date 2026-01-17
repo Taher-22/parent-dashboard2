@@ -64,10 +64,11 @@ export default function Sidebar() {
                   transition={{ type: "spring", stiffness: 320, damping: 22 }}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer
-                    ${isActive
-                      ? "bg-white/30 dark:bg-white/10 shadow-md"
-                      : "hover:bg-white/20 dark:hover:bg-white/5"
-                    }
+                   ${isActive
+  ? "bg-[rgb(var(--panel))] shadow-sm"
+  : "hover:bg-black/5 dark:hover:bg-white/5"
+}
+
                   `}
                 >
                   {/* Active glow */}

@@ -5,7 +5,7 @@ export default function AIChat() {
     <div className="space-y-5">
       <div>
         <div className="text-3xl font-extrabold tracking-tight">AI Helper</div>
-        <div className="opacity-75 mt-1">Ask parent-focused questions and get guidance (Use Case 05).</div>
+        <div className="opacity-75 mt-1"></div>
       </div>
       <ChatPanel />
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { login } from "../lib/api";
 
 export default function Login() {
@@ -8,13 +8,10 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ ADD THIS BLOCK
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/overview");
-    }
-  }, []);
+    if (token) navigate("/overview");
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -22,61 +19,108 @@ export default function Login() {
 
     try {
       const data = await login(email, password);
-
       localStorage.setItem("token", data.token);
       navigate("/overview");
-    } catch (err) {
+    } catch {
       setError("Invalid email or password");
     }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-blue-400 via-blue-600 to-blue-800">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Login</h2>
+    <div className="adapted-bg flex items-center justify-center px-4">
+      {/* Dark blobs */}
+      <div className="shape one" />
+      <div className="shape two" />
+      <div className="shape three" />
+      <div className="grain" />
 
-        {error && <p className="text-red-600 text-sm text-center mb-4">{error}</p>}
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md panel stroke p-8">
+        <h1 className="text-3xl font-semibold text-center mb-2 text-main">
+          Welcome back
+        </h1>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 font-semibold mb-2">Email</label>
+        <p className="text-center text-muted mb-6">
+          Sign in to continue
+        </p>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-sm text-red-500 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-main">
+              Email
+            </label>
             <input
-              id="email"
               type="email"
-              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="you@example.com"
+              className="
+                w-full rounded-lg px-4 py-2
+                bg-transparent
+                border border-[rgb(var(--border-soft))]
+                text-main
+                placeholder:text-muted
+                focus:outline-none
+                focus:ring-2 focus:ring-blue-500/40
+              "
             />
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 font-semibold mb-2">Password</label>
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-main">
+              Password
+            </label>
             <input
-              id="password"
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="••••••••"
+              className="
+                w-full rounded-lg px-4 py-2
+                bg-transparent
+                border border-[rgb(var(--border-soft))]
+                text-main
+                placeholder:text-muted
+                focus:outline-none
+                focus:ring-2 focus:ring-blue-500/40
+              "
             />
           </div>
 
+          {/* Button */}
           <button
             type="submit"
-            className="w-full py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="
+              w-full rounded-lg py-2.5 font-semibold
+              bg-blue-600 text-white
+              hover:bg-blue-700
+              transition
+              focus:outline-none focus:ring-2 focus:ring-blue-500/40
+            "
           >
-            Login
+            Sign In
           </button>
         </form>
 
-        <p className="mt-4 text-center text-gray-600">
-          Don't have an account?{" "}
-          <a href="/register" className="text-blue-500 font-semibold hover:underline">
-            Register here
-          </a>
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-muted">
+          Don’t have an account?{" "}
+          <Link
+            to="/register"
+            className="text-blue-500 hover:underline font-medium"
+          >
+            Create one
+          </Link>
         </p>
       </div>
     </div>

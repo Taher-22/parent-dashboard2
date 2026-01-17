@@ -1,13 +1,6 @@
-# Environment variables
+node_modules
 .env
-.env.local
-.env.*.local
-
-# Dependencies
-node_modules/
-
-# Local databases (SQLite leftovers)
-prisma/*.db
-
-# Logs
-*.log
+dist
+*.pdf
+*.pptx
+*.docx

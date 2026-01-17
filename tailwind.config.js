@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+
+  darkMode: ["class", '[data-theme="dark"]'],
+
+
   theme: {
     extend: {
       fontFamily: {
@@ -13,21 +17,7 @@ export default {
       borderRadius: {
         xl2: "1.25rem",
       },
-      keyframes: {
-        floaty: {
-          "0%,100%": { transform: "translate3d(0,0,0) scale(1)" },
-          "50%": { transform: "translate3d(30px,-20px,0) scale(1.08)" },
-        },
-        shimmer: {
-          "0%": { backgroundPosition: "0% 50%" },
-          "100%": { backgroundPosition: "100% 50%" },
-        },
-      },
-      animation: {
-        floaty: "floaty 18s ease-in-out infinite",
-        shimmer: "shimmer 8s ease-in-out infinite",
-      },
     },
   },
   plugins: [],
-}
+};

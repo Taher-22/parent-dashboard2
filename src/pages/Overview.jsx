@@ -128,7 +128,8 @@ export default function Overview() {
               <motion.div
                 key={w.subject}
                 whileHover={{ x: 4 }}
-                className="rounded-xl p-3 bg-white/20 dark:bg-white/10"
+                className="rounded-xl p-3bg-black/5 dark:bg-white/10
+"
               >
                 <div className="flex justify-between">
                   <span className="font-semibold">{w.subject}</span>
@@ -150,7 +151,8 @@ export default function Overview() {
             {recentSessions.map((s) => (
               <div
                 key={s.id}
-                className="rounded-xl p-3 bg-white/20 dark:bg-white/10"
+                className="rounded-xl p-3bg-black/5 dark:bg-white/10
+"
               >
                 <div className="flex justify-between">
                   <span className="font-semibold">{s.game}</span>

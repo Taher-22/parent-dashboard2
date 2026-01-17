@@ -36,7 +36,8 @@ export default function Topbar() {
         {/* THEME TOGGLE */}
         <button
           onClick={toggleTheme}
-          className="rounded-xl px-4 py-2 border border-white/15 bg-white/10 hover:bg-white/20 dark:bg-white/5 dark:hover:bg-white/10 flex items-center gap-2 font-semibold"
+          className="rounded-xl px-4 py-2 border border-white/15bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10
+ flex items-center gap-2 font-semibold"
         >
           {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           {isDark ? "Light" : "Dark"}

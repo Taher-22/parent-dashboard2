@@ -1,91 +1,126 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";  // Use this for redirection
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-const Register = () => {
+export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();  // Initialize navigate hook
+  const navigate = useNavigate();
 
-  // Handle form submission
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await fetch('http://localhost:5050/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const res = await fetch("http://localhost:5050/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        // Redirect to login page after successful registration
-        navigate("/login");
-      } else {
-        setError(data.error || 'Something went wrong');
-      }
+      if (res.ok) navigate("/login");
+      else setError(data.error || "Registration failed");
     } catch (err) {
-      setError('Network error: ' + err.message);
+      setError("Network error: " + err.message);
     }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-green-400 via-green-600 to-green-800">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
-        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">Register</h2>
+    <div
+      className="
+        adapted-bg flex items-center justify-center px-4
+        bg-[rgb(255,249,243)]
+        dark:bg-[rgb(14,18,35)]
+      "
+    >
+      {/* SAME SHAPES AS LOGIN */}
+      <div className="shape one" />
+      <div className="shape two" />
+      <div className="shape three" />
+      <div className="grain" />
 
-        {error && <p className="text-red-600 text-sm text-center mb-4">{error}</p>}
+      {/* SAME CARD */}
+      <div className="relative z-10 w-full max-w-md panel stroke p-8">
+        <h1 className="text-3xl font-semibold text-center mb-2 text-main">
+          Create account
+        </h1>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 font-semibold mb-2">Email</label>
+        <p className="text-center text-muted mb-6">
+          Start your journey with us
+        </p>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-sm text-red-500 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-main">
+              Email
+            </label>
             <input
-              id="email"
               type="email"
-              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="you@example.com"
+              className="
+                w-full rounded-lg px-4 py-2
+                bg-transparent
+                border border-[rgb(var(--border-soft))]
+                text-main placeholder:text-muted
+                focus:outline-none
+                focus:ring-2 focus:ring-violet-500/40
+              "
             />
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 font-semibold mb-2">Password</label>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-main">
+              Password
+            </label>
             <input
-              id="password"
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="••••••••"
+              className="
+                w-full rounded-lg px-4 py-2
+                bg-transparent
+                border border-[rgb(var(--border-soft))]
+                text-main placeholder:text-muted
+                focus:outline-none
+                focus:ring-2 focus:ring-violet-500/40
+              "
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="
+              w-full rounded-lg py-2.5 font-semibold
+              bg-violet-600 text-white
+              hover:bg-violet-700
+              transition
+              focus:outline-none focus:ring-2 focus:ring-violet-500/40
+            "
           >
-            Register
+            Create Account
           </button>
         </form>
 
-        <p className="mt-4 text-center text-gray-600">
+        <p className="mt-6 text-center text-sm text-muted">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-500 font-semibold hover:underline">
-            Login here
+          <Link to="/login" className="text-blue-500 hover:underline font-medium">
+            Sign in
           </Link>
         </p>
       </div>
     </div>
   );
-};
-
-export default Register;
+}

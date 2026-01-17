@@ -1,12 +1,11 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
 
 import Sidebar from "../ui/Sidebar.jsx";
 import Topbar from "../ui/Topbar.jsx";
 
 import Login from "../pages/Login.jsx";
-import Register from "../pages/Register.jsx";  // Ensure Register is imported
+import Register from "../pages/Register.jsx";
 import Overview from "../pages/Overview.jsx";
 import TimeControl from "../pages/TimeControl.jsx";
 import Reports from "../pages/Reports.jsx";
@@ -14,28 +13,25 @@ import AIChat from "../pages/AIChat.jsx";
 import Subjects from "../pages/Subjects.jsx";
 import SubjectDetails from "../pages/SubjectDetails.jsx";
 import NotFound from "../pages/NotFound.jsx";
-import ProtectedRoute from "../components/ProtectedRoute";  // Import ProtectedRoute
-
 
 export default function AppShell() {
   const location = useLocation();
   const token = localStorage.getItem("token");
 
-  /* 🔒 NOT AUTHENTICATED → LOGIN or REGISTER */
+  /* 🔒 NOT AUTHENTICATED */
   if (!token) {
     return (
       <AnimatePresence mode="wait">
         <motion.div
-          key="login-register"
+          key="login"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.3 }}
         >
           <Routes>
-            {/* Ensure both login and register routes are visible */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />  {/* Registration route */}
+            <Route path="/register" element={<Register />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </motion.div>
@@ -43,28 +39,26 @@ export default function AppShell() {
     );
   }
 
-  /* ✅ AUTHENTICATED → DASHBOARD */
+  /* ✅ AUTHENTICATED */
   return (
     <div className="adapted-bg relative min-h-screen overflow-hidden">
-      {/* Animated background blobs */}
+      {/* Background blobs (CSS decides when visible) */}
       <div className="shape one" />
       <div className="shape two" />
       <div className="shape three" />
 
-      {/* Grain overlay */}
+      {/* Grain */}
       <div className="grain pointer-events-none absolute inset-0" />
 
-      {/* REAL CONTENT */}
       <div className="relative z-10 max-w-[1400px] mx-auto p-4 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 md:gap-6">
 
-          <aside className="no-print lg:sticky lg:top-6 self-start">
+          <aside className="lg:sticky lg:top-6 self-start">
             <Sidebar />
           </aside>
 
           <div className="flex flex-col gap-4 md:gap-6">
-
-            <header className="no-print lg:sticky lg:top-6 z-20">
+            <header className="lg:sticky lg:top-6 z-20">
               <Topbar />
             </header>
 
