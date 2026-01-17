@@ -31,14 +31,17 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    const token = generateToken(parent);
+const token = generateToken(parent);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,        // REQUIRED on HTTPS
-      sameSite: "none",    // REQUIRED for cross-site
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
+res.json({ success: true });
+
 
     res.status(201).json({ success: true });
   } catch (err) {
@@ -69,11 +72,12 @@ router.post("/login", async (req, res) => {
 
     const token = generateToken(parent);
 
+    // ✅ SET COOKIE
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,        // REQUIRED on HTTPS
-      sameSite: "none",    // REQUIRED for cross-site
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: true,          // REQUIRED on HTTPS (Railway)
+      sameSite: "none",      // REQUIRED for cross-domain
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.json({ success: true });
@@ -82,6 +86,7 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 /* =========================
    ME (PROTECTED)
