@@ -7,7 +7,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
- async function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault();
   setError("");
 
@@ -16,7 +16,6 @@ export default function Register() {
       `${import.meta.env.VITE_API_URL}/api/auth/register`,
       {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       }
@@ -24,12 +23,17 @@ export default function Register() {
 
     const data = await res.json();
 
-    if (res.ok) navigate("/login");
-    else setError(data.error || "Registration failed");
+    if (res.ok) {
+      localStorage.setItem("token", data.token);  // SAVE THE TOKEN
+      navigate("/overview");                       // GO TO DASHBOARD
+    } else {
+      setError(data.error || "Registration failed");
+    }
   } catch (err) {
     setError("Network error: " + err.message);
   }
 }
+
 
 
   return (
