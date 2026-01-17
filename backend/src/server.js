@@ -28,6 +28,9 @@ app.get("/api/overview", requireAuth, (req, res) => {
   });
 });
 
-app.listen(5050, () => {
-  console.log("✅ API running on http://localhost:5050");
+const PORT = process.env.PORT || 5050;
+
+app.listen(PORT, () => {
+  console.log(`API running on port ${PORT}`);
 });
+
