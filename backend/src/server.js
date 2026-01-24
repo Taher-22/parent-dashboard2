@@ -3,8 +3,14 @@ import cors from "cors";
 
 import authRoutes from "./auth/auth.routes.js";
 import { requireAuth } from "./auth/auth.middleware.js";
+import childrenRoutes from "./children/children.routes.js";
+
 
 const app = express();
+
+
+app.use("/api/children", childrenRoutes);
+
 
 // ✅ SIMPLE, SAFE CORS (ENOUGH FOR JSON + AUTH HEADER)
 app.use(
