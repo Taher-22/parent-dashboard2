@@ -1,6 +1,6 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import { authenticate } from "../auth/auth.middleware.js";
+import { requireAuth } from "../auth/auth.middleware.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ function generateChildCode() {
  * POST /api/children/add
  * Parent creates a child and gets a code
  */
-router.post("/add", authenticate, async (req, res) => {
+router.post("/add", requireAuth, async (req, res) => {
   try {
     const { displayName, birthdate } = req.body;
 
@@ -53,7 +53,7 @@ router.post("/add", authenticate, async (req, res) => {
  * GET /api/children/my
  * Get children for logged-in parent
  */
-router.get("/my", authenticate, async (req, res) => {
+router.get("/my", requireAuth, async (req, res) => {
   const children = await prisma.child.findMany({
     where: { parentId: req.user.id },
   });
