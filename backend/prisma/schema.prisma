@@ -28,15 +28,18 @@ model Child {
   birthdate     DateTime?
   coins         Int      @default(0)
 
+  childCode     String   @unique
+
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
-  subjects      SubjectProgress[] // Relationship with SubjectProgress
-  rewards       Reward[]          // Relationship with Reward
-  timeControls  TimeControls?     // Relationship with TimeControls
+  subjects      SubjectProgress[]
+  rewards       Reward[]
+  timeControls  TimeControls?
 
   createdAt     DateTime @default(now())
 }
+
 
 model Subject {
   id          String   @id @default(cuid())
