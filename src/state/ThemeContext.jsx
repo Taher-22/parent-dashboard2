@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 
 const ThemeContext = createContext(null);
 
-const STORAGE_KEY = "edugalaxy_theme";
+const STORAGE_KEY = "neuroquest_theme";
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {

@@ -50,7 +50,7 @@ export default function Reports() {
                 <Printer className="h-4 w-4" /> Print
               </button>
               <button
-                onClick={() => downloadJson("edugalaxy-report.json", report)}
+                onClick={() => downloadJson("neuroquest-report.json", report)}
                 className="rounded-xl px-4 py-2 border border-white/15 bg-white/10 hover:bg-white/20 font-semibold flex items-center gap-2"
               >
                 <Download className="h-4 w-4" /> Export JSON

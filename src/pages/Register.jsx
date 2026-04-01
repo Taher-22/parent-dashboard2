@@ -25,6 +25,8 @@ async function handleSubmit(e) {
 
     if (res.ok) {
       localStorage.setItem("token", data.token);  // SAVE THE TOKEN
+      // Notify ChildrenContext to refresh with new user's data
+      window.dispatchEvent(new Event("token-changed"));
       navigate("/overview");                       // GO TO DASHBOARD
     } else {
       setError(data.error || "Registration failed");

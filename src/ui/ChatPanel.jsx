@@ -25,7 +25,7 @@ function bubbleBase(isUser) {
 
 export default function ChatPanel() {
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hi! I’m your EduGalaxy AI helper. Ask me about limits, progress, or weak areas." },
+    { role: "assistant", text: "Hi! I'm your NeuroQuest AI helper. Ask me about limits, progress, or weak areas." },
   ]);
   const [input, setInput] = useState("");
   const listRef = useRef(null);

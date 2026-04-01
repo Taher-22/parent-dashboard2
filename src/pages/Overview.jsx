@@ -1,51 +1,77 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMe } from "../lib/api";
+import { getMe, addChild } from "../lib/api";
 
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
 import AnimatedCounter from "../ui/AnimatedCounter.jsx";
-import TimeTrendChart from "../ui/TimeTrendChart.jsx";
 import Badge from "../ui/Badge.jsx";
-
-import {
-  childProfile,
-  kpis,
-  weeklyMinutes,
-  weakAreas,
-  recentSessions
-} from "../data/mock.js";
 
 import { motion } from "framer-motion";
 import { Sparkles, Clock3, ListChecks } from "lucide-react";
 
+import { useChildren } from "../state/ChildrenContext.jsx";
+
 export default function Overview() {
-  const [auth, setAuth] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // shared children state
+  const { kids, activeChild, reloadChildren, loadingKids } = useChildren();
+
+  // auth (used only to validate token + redirect)
+  const [loading, setLoading] = useState(true);
+
+  // create child form
+  const [childName, setChildName] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+  const [generatedCode, setGeneratedCode] = useState(null);
+  const [creating, setCreating] = useState(false);
+
+  // KPIs default 0 (real data later)
+  const kpis = useMemo(
+    () => ({
+      todayFocusMinutes: 0,
+      weeklyProgressPct: 0,
+    }),
+    []
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
-    // 🔴 NO TOKEN → GO LOGIN
     if (!token) {
       navigate("/login");
       return;
     }
 
-    // 🔐 TOKEN EXISTS → VERIFY IT
+    // Validate token quickly
     getMe()
-      .then((data) => {
-        setAuth(data); // { user: {...} }
-      })
       .catch(() => {
         localStorage.removeItem("token");
         navigate("/login");
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => setLoading(false));
   }, [navigate]);
+
+  async function handleAddChild() {
+    if (!childName.trim()) return;
+
+    try {
+      setCreating(true);
+
+      const child = await addChild(childName.trim(), birthdate);
+      setGeneratedCode(child.childCode);
+
+      setChildName("");
+      setBirthdate("");
+
+      // 🔥 This updates Overview list + Topbar instantly
+      await reloadChildren();
+    } catch (err) {
+      alert("Failed to create child");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -55,18 +81,13 @@ export default function Overview() {
     );
   }
 
-  // ✅ AUTH CONFIRMED → RENDER PAGE
   return (
     <PageTransition>
       {/* HEADER */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            Parent Overview
-          </h1>
-          <p className="opacity-75 mt-1">
-            Time, progress patterns, mastery, and support signals.
-          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Parent Overview</h1>
+          <p className="opacity-75 mt-1">Time, progress patterns, mastery, and support signals.</p>
         </div>
 
         <div className="hidden md:flex items-center gap-2">
@@ -81,6 +102,73 @@ export default function Overview() {
           </Badge>
         </div>
       </div>
+
+      {/* ACTIVE CHILD */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-lg">
+            {loadingKids ? (
+              "Loading child..."
+            ) : activeChild ? (
+              `Child: ${activeChild.displayName}`
+            ) : (
+              "No child added yet"
+            )}
+          </div>
+          <Badge tone="blue">Mode: {activeChild ? "Active" : "Inactive"}</Badge>
+        </div>
+      </Card>
+
+      {/* ADD CHILD */}
+      <Card title="Add Child (Game Access Code)">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            className="rounded-lg p-2 bg-black/5 dark:bg-white/10"
+            placeholder="Child name"
+            value={childName}
+            onChange={(e) => setChildName(e.target.value)}
+          />
+
+          <input
+            type="date"
+            className="rounded-lg p-2 bg-black/5 dark:bg-white/10"
+            value={birthdate}
+            onChange={(e) => setBirthdate(e.target.value)}
+          />
+
+          <button
+            onClick={handleAddChild}
+            disabled={creating}
+            className="rounded-lg bg-emerald-500 text-black font-bold py-2"
+          >
+            {creating ? "Creating..." : "Create Child"}
+          </button>
+        </div>
+
+        {generatedCode && (
+          <div className="mt-4 p-3 rounded-xl bg-emerald-500/10">
+            <p className="text-sm opacity-80">Give this code to your child to enter in the game:</p>
+            <p className="text-2xl font-black tracking-widest mt-1">{generatedCode}</p>
+          </div>
+        )}
+      </Card>
+
+      {/* CHILDREN LIST */}
+      {kids.length > 0 && (
+        <Card title="Your Children">
+          <div className="space-y-2">
+            {kids.map((c) => (
+              <div
+                key={c.id}
+                className="flex justify-between rounded-lg p-3 bg-black/5 dark:bg-white/10"
+              >
+                <span className="font-semibold">{c.displayName}</span>
+                <span className="font-mono text-sm opacity-80">{c.childCode}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* KPI ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -102,13 +190,9 @@ export default function Overview() {
           </div>
         </Card>
 
-        <Card
-          title="Parent Insight"
-          right={<Badge tone="blue">Mode: {childProfile.focusMode}</Badge>}
-        >
+        <Card title="Parent Insight" right={<Badge tone="blue">Mode: Active</Badge>}>
           <p className="text-sm opacity-80">
-            Predictable, short sessions improve regulation.
-            Adjust routines in <b>Time Control</b>.
+            Predictable, short sessions improve regulation. Adjust routines in <b>Time Control</b>.
           </p>
         </Card>
       </div>
@@ -116,51 +200,18 @@ export default function Overview() {
       {/* CHART + SUPPORT AREAS */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card title="Learning Time Trend (7 Days)">
-          <div className="h-[260px]">
-            <TimeTrendChart data={weeklyMinutes} />
-          </div>
+          <div className="h-[260px] flex items-center justify-center opacity-60">No data yet</div>
         </Card>
 
         <Card title="Support Areas">
-          <div className="space-y-3">
-            {weakAreas.map((w) => (
-              <motion.div
-                key={w.subject}
-                whileHover={{ x: 4 }}
-                className="rounded-xl p-3 bg-black/5 dark:bg-white/10"
-              >
-                <div className="flex justify-between">
-                  <span className="font-semibold">{w.subject}</span>
-                  <span className="text-xs font-bold text-orange-400">
-                    {w.severity}
-                  </span>
-                </div>
-                <div className="text-sm opacity-75 mt-1">{w.note}</div>
-              </motion.div>
-            ))}
-          </div>
+          <div className="opacity-60 text-sm">No support signals yet</div>
         </Card>
       </div>
 
       {/* RECENT ACTIVITY */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card title="Recent Activity">
-          <div className="space-y-3">
-            {recentSessions.map((s) => (
-              <div
-                key={s.id}
-                className="rounded-xl p-3 bg-black/5 dark:bg-white/10"
-              >
-                <div className="flex justify-between">
-                  <span className="font-semibold">{s.game}</span>
-                  <span className="text-xs opacity-70">{s.time}</span>
-                </div>
-                <div className="text-sm opacity-80 mt-1">
-                  {s.outcome}
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="opacity-60 text-sm">No recent activity yet</div>
         </Card>
       </div>
     </PageTransition>
