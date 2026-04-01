@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../db/prisma.js";
 import { hashPassword, verifyPassword, generateToken } from "./utils.js";
+import { requireAuth } from "./auth.middleware.js";
 
 const router = express.Router();
 
@@ -44,6 +45,20 @@ router.post("/login", async (req, res) => {
 
   const token = generateToken(parent);
   res.json({ token });
+});
+
+/* ME */
+router.get("/me", requireAuth, async (req, res) => {
+  const parent = await prisma.parent.findUnique({
+    where: { id: req.user.id },
+    select: { id: true, email: true, role: true, createdAt: true },
+  });
+
+  if (!parent) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  res.json(parent);
 });
 
 export default router;

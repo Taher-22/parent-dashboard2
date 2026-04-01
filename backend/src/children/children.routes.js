@@ -1,9 +1,8 @@
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // helper to generate unique code
 function generateChildCode() {
