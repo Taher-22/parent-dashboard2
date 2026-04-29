@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../lib/api";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Auto redirect if token exists
@@ -18,11 +21,19 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
     try {
       await login(email, password);
       navigate("/overview");
-    } catch {
+    } catch (err) {
       setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -80,36 +91,55 @@ export default function Login() {
             <label className="block text-sm font-medium mb-1 text-main">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="
-                w-full rounded-lg px-4 py-2
-                bg-transparent
-                border border-[rgb(var(--border-soft))]
-                text-main
-                placeholder:text-muted
-                focus:outline-none
-                focus:ring-2 focus:ring-blue-500/40
-              "
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="
+                  w-full rounded-lg px-4 py-2 pr-10
+                  bg-transparent
+                  border border-[rgb(var(--border-soft))]
+                  text-main
+                  placeholder:text-muted
+                  focus:outline-none
+                  focus:ring-2 focus:ring-blue-500/40
+                "
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-main transition"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* Button */}
           <button
             type="submit"
+            disabled={loading}
             className="
               w-full rounded-lg py-2.5 font-semibold
               bg-blue-600 text-white
               hover:bg-blue-700
               transition
               focus:outline-none focus:ring-2 focus:ring-blue-500/40
+              disabled:opacity-70 disabled:cursor-not-allowed
+              flex items-center justify-center gap-2
             "
           >
-            Sign In
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
 
