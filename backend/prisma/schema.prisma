@@ -19,6 +19,7 @@ model Parent {
   role         Role     @default(PARENT)
 
   children     Child[]  // Relationship with Child model
+  messages     Message[] // Relationship with Message model
   createdAt    DateTime @default(now())
 }
 
@@ -36,6 +37,7 @@ model Child {
   subjects      SubjectProgress[]
   rewards       Reward[]
   timeControls  TimeControls?
+  messages      Message[] // Relationship with Message model
 
   createdAt     DateTime @default(now())
 }
@@ -83,4 +85,18 @@ model TimeControls {
 
   childId       String   @unique
   child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  read      Boolean  @default(false)
+
+  parentId  String
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }

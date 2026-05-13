@@ -395,4 +395,61 @@ router.get("/:childId/reports/time-trend", requireAuth, async (req, res) => {
   res.json({ days });
 });
 
+/**
+ * POST /api/children/:childId/messages
+ * Parent sends a message to child
+ */
+router.post("/:childId/messages", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const { content } = req.body;
+
+  if (!content || typeof content !== "string" || content.trim().length === 0) {
+    return res.status(400).json({ message: "Message content is required" });
+  }
+
+  // Verify child belongs to this parent
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+
+  if (!child) {
+    return res.status(404).json({ message: "Child not found" });
+  }
+
+  const message = await prisma.message.create({
+    data: {
+      content: content.trim(),
+      parentId: req.user.id,
+      childId,
+    },
+  });
+
+  res.json(message);
+});
+
+/**
+ * GET /api/children/:childId/messages
+ * Parent gets messages for a child
+ */
+router.get("/:childId/messages", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+
+  // Verify child belongs to this parent
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+
+  if (!child) {
+    return res.status(404).json({ message: "Child not found" });
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { childId },
+    orderBy: { createdAt: "desc" },
+    take: 50, // Last 50 messages
+  });
+
+  res.json(messages);
+});
+
 export default router;

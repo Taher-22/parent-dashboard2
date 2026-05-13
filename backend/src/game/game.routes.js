@@ -151,4 +151,36 @@ router.post("/child/:childId/reward", async (req, res) => {
   return res.status(201).json(reward);
 });
 
+/**
+ * GET /api/game/messages
+ * Game fetches messages for a child using childCode
+ */
+router.get("/messages", async (req, res) => {
+  const { childCode } = req.query;
+
+  if (!childCode) {
+    return res.status(400).json({ error: "childCode is required" });
+  }
+
+  const child = await prisma.child.findUnique({
+    where: { childCode },
+  });
+
+  if (!child) {
+    return res.status(404).json({ error: "Invalid child code" });
+  }
+
+  const messages = await prisma.message.findMany({
+    where: { childId: child.id },
+    orderBy: { createdAt: "desc" },
+    take: 20, // Last 20 messages
+  });
+
+  res.json({
+    childId: child.id,
+    displayName: child.displayName,
+    messages,
+  });
+});
+
 export default router;
