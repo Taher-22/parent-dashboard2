@@ -17,19 +17,28 @@ model Parent {
   email        String   @unique
   passwordHash String
   role         Role     @default(PARENT)
+  name         String?
+  birthdate    DateTime?
 
-  children     Child[]  // Relationship with Child model
-  messages     Message[] // Relationship with Message model
+  children     Child[]
+  messages     Message[]
   createdAt    DateTime @default(now())
 }
 
 model Child {
-  id            String   @id @default(cuid())
-  displayName   String
-  birthdate     DateTime?
-  coins         Int      @default(0)
+  id                    String    @id @default(cuid())
+  displayName           String
+  birthdate             DateTime?
+  coins                 Int       @default(0)
+  childCode             String    @unique
 
-  childCode     String   @unique
+  // ERD fields
+  email                 String?
+  passwordHash          String?
+  generalLevel          Int       @default(1)
+  subjectsOfInterest    String?   // JSON array e.g. '["Math","Reading"]'
+  mentalHealthConditions String?  // free-text or JSON notes
+  avatarConfig          String?   // JSON object for avatar customisation
 
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
@@ -37,7 +46,7 @@ model Child {
   subjects      SubjectProgress[]
   rewards       Reward[]
   timeControls  TimeControls?
-  messages      Message[] // Relationship with Message model
+  messages      Message[]
 
   createdAt     DateTime @default(now())
 }
@@ -45,9 +54,10 @@ model Child {
 
 model Subject {
   id          String   @id @default(cuid())
-  name        String   // Math, Astronomy, etc.
+  name        String
+  description String?
 
-  progress    SubjectProgress[] // Relationship with SubjectProgress
+  progress    SubjectProgress[]
 }
 
 model SubjectProgress {
@@ -59,17 +69,20 @@ model SubjectProgress {
   subjectId    String
   subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
-  timeSpentSec Int      @default(0)
-  completion   Float    @default(0) // 0–100%
-  lastPlayedAt DateTime?
+  timeSpentSec    Int      @default(0)
+  completion      Float    @default(0)
+  lastPlayedAt    DateTime?
+  keyPresses      String?  // JSON array of timestamped key-press events
 
   @@unique([childId, subjectId])
 }
 
 model Reward {
-  id        String   @id @default(cuid())
-  type      String   // badge, coin, level, etc.
-  value     Int
+  id          String   @id @default(cuid())
+  type        String
+  value       Int
+  name        String?
+  description String?
 
   childId   String
   child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -78,13 +91,16 @@ model Reward {
 }
 
 model TimeControls {
-  id            String   @id @default(cuid())
-  dailyMinutes  Int
-  allowedFrom   String?  // "16:00"
-  allowedTo     String?  // "18:00"
+  id                 String   @id @default(cuid())
+  dailyMinutes       Int
+  allowedFrom        String?  // "16:00"
+  allowedTo          String?  // "18:00"
+  maxSessionsAllowed Int?
 
-  childId       String   @unique
-  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  childId   String   @unique
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
 }
 
 model Message {
