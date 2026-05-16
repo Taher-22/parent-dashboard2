@@ -1,46 +1,47 @@
 const API_URL = "https://parent-dashboard2-production.up.railway.app";
 
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+async function request(path, options = {}) {
+  const res = await fetch(`${API_URL}${path}`, options);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || body.message || `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 /* =========================
    AUTH
 ========================= */
 
 export async function register(email, password) {
-  const res = await fetch(`${API_URL}/api/auth/register`, {
+  return request("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-
-  if (!res.ok) throw new Error("Register failed");
-  return res.json();
 }
 
 export async function login(email, password) {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
+  const data = await request("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-
-  if (!res.ok) throw new Error("Login failed");
-
-  const data = await res.json();
   localStorage.setItem("token", data.token);
-  // Notify ChildrenContext to refresh with new user's data
   window.dispatchEvent(new Event("token-changed"));
   return data;
 }
 
 export async function getMe() {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token");
-
-  const res = await fetch(`${API_URL}/api/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) throw new Error("Unauthorized");
-  return res.json();
+  return request("/api/me", { headers: authHeaders() });
 }
 
 /* =========================
@@ -48,43 +49,122 @@ export async function getMe() {
 ========================= */
 
 export async function addChild(displayName, birthdate) {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token");
-
-  const res = await fetch(`${API_URL}/api/children/add`, {
+  return request("/api/children/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: authHeaders(),
     body: JSON.stringify({ displayName, birthdate }),
   });
-
-  if (!res.ok) throw new Error("Failed to create child");
-  return res.json();
 }
 
 export async function getMyChildren() {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No token");
+  return request("/api/children/my", { headers: authHeaders() });
+}
 
-  const res = await fetch(`${API_URL}/api/children/my`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export async function updateChild(childId, data) {
+  return request(`/api/children/${childId}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
   });
+}
 
-  if (!res.ok) throw new Error("Failed to fetch children");
-  return res.json();
+export async function deleteChild(childId) {
+  return request(`/api/children/${childId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
 }
 
 export async function redeemChildCode(childCode) {
-  const res = await fetch(`${API_URL}/api/children/redeem`, {
+  return request("/api/children/redeem", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ childCode }),
   });
+}
 
-  if (!res.ok) throw new Error("Invalid child code");
-  return res.json();
+/* =========================
+   TIME CONTROLS
+========================= */
+
+export async function getTimeControls(childId) {
+  return request(`/api/children/${childId}/time-controls`, {
+    headers: authHeaders(),
+  });
+}
+
+export async function updateTimeControls(childId, data) {
+  return request(`/api/children/${childId}/time-controls`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+/* =========================
+   REPORTS
+========================= */
+
+export async function getChildReport(childId) {
+  return request(`/api/children/${childId}/reports`, {
+    headers: authHeaders(),
+  });
+}
+
+export async function getSubjectReport(childId, subjectId) {
+  return request(`/api/children/${childId}/reports/${subjectId}`, {
+    headers: authHeaders(),
+  });
+}
+
+export async function getTimeTrend(childId) {
+  return request(`/api/children/${childId}/reports/time-trend`, {
+    headers: authHeaders(),
+  });
+}
+
+/* =========================
+   MESSAGES
+========================= */
+
+export async function sendMessage(childId, content) {
+  return request(`/api/children/${childId}/messages`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function getMessages(childId) {
+  return request(`/api/children/${childId}/messages`, {
+    headers: authHeaders(),
+  });
+}
+
+/* =========================
+   GAME INTEGRATION
+========================= */
+
+export async function getGameProgress(childId) {
+  return request(`/api/game/child/${childId}/progress`);
+}
+
+export async function postGameProgress(childId, data) {
+  return request(`/api/game/child/${childId}/progress`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function postGameReward(childId, type, value) {
+  return request(`/api/game/child/${childId}/reward`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, value }),
+  });
+}
+
+export async function getGameMessages(childCode) {
+  return request(`/api/game/messages?childCode=${encodeURIComponent(childCode)}`);
 }

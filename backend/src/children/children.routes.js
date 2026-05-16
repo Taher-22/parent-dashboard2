@@ -295,53 +295,9 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
 });
 
 /**
- * GET /api/children/:childId/reports/:subjectId
- * Get subject-specific report
- */
-router.get("/:childId/reports/:subjectId", requireAuth, async (req, res) => {
-  const { childId, subjectId } = req.params;
-
-  // Verify child belongs to this parent
-  const child = await prisma.child.findFirst({
-    where: { id: childId, parentId: req.user.id },
-  });
-
-  if (!child) {
-    return res.status(404).json({ message: "Child not found" });
-  }
-
-  const progress = await prisma.subjectProgress.findMany({
-    where: { childId, subjectId },
-    orderBy: { lastPlayedAt: "desc" },
-  });
-
-  const subject = await prisma.subject.findUnique({
-    where: { id: subjectId },
-  });
-
-  const totalTimeSpentSec = progress.reduce((sum, sp) => sum + sp.timeSpentSec, 0);
-  const averageCompletion = progress.length > 0
-    ? progress.reduce((sum, sp) => sum + sp.completion, 0) / progress.length
-    : 0;
-
-  res.json({
-    subjectId,
-    subjectName: subject?.name || subjectId,
-    totalTimeSpentSec,
-    completion: Math.round(averageCompletion * 10) / 10,
-    sessionsCount: progress.length,
-    lastPlayedAt: progress[0]?.lastPlayedAt || null,
-    sessions: progress.map((sp) => ({
-      date: sp.lastPlayedAt ? new Date(sp.lastPlayedAt).toISOString().split("T")[0] : null,
-      timeSpentSec: sp.timeSpentSec,
-      completion: sp.completion,
-    })),
-  });
-});
-
-/**
  * GET /api/children/:childId/reports/time-trend
  * Get daily play time for the last 7 days
+ * MUST be declared before /:childId/reports/:subjectId to avoid being shadowed
  */
 router.get("/:childId/reports/time-trend", requireAuth, async (req, res) => {
   const { childId } = req.params;
@@ -393,6 +349,49 @@ router.get("/:childId/reports/time-trend", requireAuth, async (req, res) => {
   }));
 
   res.json({ days });
+});
+
+/**
+ * GET /api/children/:childId/reports/:subjectId
+ * Get subject-specific report
+ */
+router.get("/:childId/reports/:subjectId", requireAuth, async (req, res) => {
+  const { childId, subjectId } = req.params;
+
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+
+  if (!child) {
+    return res.status(404).json({ message: "Child not found" });
+  }
+
+  const progress = await prisma.subjectProgress.findMany({
+    where: { childId, subjectId },
+    orderBy: { lastPlayedAt: "desc" },
+  });
+
+  const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+
+  const totalTimeSpentSec = progress.reduce((sum, sp) => sum + sp.timeSpentSec, 0);
+  const averageCompletion =
+    progress.length > 0
+      ? progress.reduce((sum, sp) => sum + sp.completion, 0) / progress.length
+      : 0;
+
+  res.json({
+    subjectId,
+    subjectName: subject?.name || subjectId,
+    totalTimeSpentSec,
+    completion: Math.round(averageCompletion * 10) / 10,
+    sessionsCount: progress.length,
+    lastPlayedAt: progress[0]?.lastPlayedAt || null,
+    sessions: progress.map((sp) => ({
+      date: sp.lastPlayedAt ? new Date(sp.lastPlayedAt).toISOString().split("T")[0] : null,
+      timeSpentSec: sp.timeSpentSec,
+      completion: sp.completion,
+    })),
+  });
 });
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMe, addChild } from "../lib/api";
+import { getMe } from "../lib/api";
 
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
@@ -20,12 +20,6 @@ export default function Overview() {
 
   // auth (used only to validate token + redirect)
   const [loading, setLoading] = useState(true);
-
-  // create child form
-  const [childName, setChildName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
-  const [generatedCode, setGeneratedCode] = useState(null);
-  const [creating, setCreating] = useState(false);
 
   // KPIs default 0 (real data later)
   const kpis = useMemo(
@@ -51,27 +45,6 @@ export default function Overview() {
       })
       .finally(() => setLoading(false));
   }, [navigate]);
-
-  async function handleAddChild() {
-    if (!childName.trim()) return;
-
-    try {
-      setCreating(true);
-
-      const child = await addChild(childName.trim(), birthdate);
-      setGeneratedCode(child.childCode);
-
-      setChildName("");
-      setBirthdate("");
-
-      // 🔥 This updates Overview list + Topbar instantly
-      await reloadChildren();
-    } catch (err) {
-      alert("Failed to create child");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -118,57 +91,6 @@ export default function Overview() {
           <Badge tone="blue">Mode: {activeChild ? "Active" : "Inactive"}</Badge>
         </div>
       </Card>
-
-      {/* ADD CHILD */}
-      <Card title="Add Child (Game Access Code)">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            className="rounded-lg p-2 bg-black/5 dark:bg-white/10"
-            placeholder="Child name"
-            value={childName}
-            onChange={(e) => setChildName(e.target.value)}
-          />
-
-          <input
-            type="date"
-            className="rounded-lg p-2 bg-black/5 dark:bg-white/10"
-            value={birthdate}
-            onChange={(e) => setBirthdate(e.target.value)}
-          />
-
-          <button
-            onClick={handleAddChild}
-            disabled={creating}
-            className="rounded-lg bg-emerald-500 text-black font-bold py-2"
-          >
-            {creating ? "Creating..." : "Create Child"}
-          </button>
-        </div>
-
-        {generatedCode && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-500/10">
-            <p className="text-sm opacity-80">Give this code to your child to enter in the game:</p>
-            <p className="text-2xl font-black tracking-widest mt-1">{generatedCode}</p>
-          </div>
-        )}
-      </Card>
-
-      {/* CHILDREN LIST */}
-      {kids.length > 0 && (
-        <Card title="Your Children">
-          <div className="space-y-2">
-            {kids.map((c) => (
-              <div
-                key={c.id}
-                className="flex justify-between rounded-lg p-3 bg-black/5 dark:bg-white/10"
-              >
-                <span className="font-semibold">{c.displayName}</span>
-                <span className="font-mono text-sm opacity-80">{c.childCode}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* KPI ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
