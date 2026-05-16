@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Printer, Download, AlertTriangle, Trophy, Clock, Star } from "lucide-react";
+import { Printer, AlertTriangle, Trophy, Clock, Star } from "lucide-react";
 
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
@@ -9,16 +9,6 @@ import { useChildren } from "../state/ChildrenContext.jsx";
 import { getChildReport } from "../lib/api.js";
 
 /* ── helpers ───────────────────────────────────────────── */
-
-function downloadJson(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 function formatTime(seconds) {
   if (!seconds) return "0 min";
@@ -60,14 +50,6 @@ export default function Reports() {
 
   function handlePrint() {
     window.print();
-  }
-
-  function handleExport() {
-    if (!report) return;
-    downloadJson(
-      `Report_${child?.displayName?.replace(/ /g, "_") ?? "child"}_${new Date().toISOString().split("T")[0]}.json`,
-      report
-    );
   }
 
   return (
@@ -125,7 +107,6 @@ export default function Reports() {
         </div>
         <div className="hidden md:flex gap-2">
           <Badge tone="blue">Printable</Badge>
-          <Badge tone="purple">Exportable</Badge>
         </div>
       </div>
 
@@ -216,22 +197,13 @@ export default function Reports() {
                     <Printer className="h-4 w-4 opacity-70" />
                     Print Detailed PDF Report
                   </button>
-                  <button
-                    onClick={handleExport}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl
-                               border border-white/10 bg-white/5 hover:bg-white/10
-                               font-semibold text-sm transition-colors"
-                  >
-                    <Download className="h-4 w-4 opacity-70" />
-                    Export JSON
-                  </button>
                 </div>
               </Card>
 
               {/* Subject Mastery */}
               <Card title="Subject Mastery" subtitle="Completion % per subject">
                 {subjects.length === 0 ? (
-                  <p className="text-sm opacity-60">No mastery data yet.</p>
+                  <p className="text-sm opacity-60">No data yet — will populate once your child starts playing in the game.</p>
                 ) : (
                   <div className="space-y-5">
                     {subjects.map((s) => {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getMe, getMyChildren } from "../lib/api";
+import { getMe, getMyChildren, addChild } from "../lib/api";
 
 // Context
 const ChildrenContext = createContext(null);
@@ -80,7 +80,7 @@ export function ChildrenProvider({ children }) {
       setKids(safe);
 
       // keep active child valid
-      setActiveChildIdState((prev) => {
+setActiveChildIdState((prev) => {
         if (prev && safe.some((k) => k.id === prev)) return prev;
 
         const next = safe[0]?.id || "";
@@ -94,6 +94,13 @@ export function ChildrenProvider({ children }) {
     } finally {
       setLoadingKids(false);
     }
+  }
+
+  // Create a new child
+  async function createChild(displayName, birthdate) {
+    const child = await addChild(displayName, birthdate);
+    await reloadChildren(); // Refresh the list
+    return child;
   }
 
   // Public setter that also persists per-parent
@@ -137,6 +144,7 @@ export function ChildrenProvider({ children }) {
       activeChildId,
       setActiveChildId,
       reloadChildren,
+      createChild,
       loading,
       loadingKids,
       clearState, // optional if you want to call it on logout

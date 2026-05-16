@@ -1,35 +1,30 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext(null);
 
-const STORAGE_KEY = "neuroquest_theme";
-
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved === "dark" ? "dark" : "light";
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  }, [isDark]);
 
-  const value = useMemo(
-    () => ({
-      theme,
-      isDark: theme === "dark",
-      toggleTheme: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-      setTheme,
-    }),
-    [theme]
+  function toggleTheme() {
+    setIsDark((prev) => !prev);
+  }
+
+  return (
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
   );
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used inside ThemeProvider");
-  return ctx;
+  return useContext(ThemeContext);
 }

@@ -204,8 +204,8 @@ export default function Sidebar() {
                 </button>
               </div>
               <input
-                className="w-full rounded-lg px-2.5 py-2 bg-white/8 border border-white/10
-                           text-sm placeholder:opacity-40 outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full rounded-lg px-2.5 py-2 bg-slate-700/60 border border-white/10
+                           text-sm text-white placeholder:text-white/30 outline-none focus:border-emerald-500/60 transition-colors"
                 placeholder="Child's name"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value)}
@@ -213,8 +213,8 @@ export default function Sidebar() {
               />
               <input
                 type="date"
-                className="w-full rounded-lg px-2.5 py-2 bg-white/8 border border-white/10
-                           text-sm opacity-70 outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full rounded-lg px-2.5 py-2 bg-slate-700/60 border border-white/10
+                           text-sm text-white/80 outline-none focus:border-emerald-500/60 transition-colors"
                 value={birthdate}
                 onChange={(e) => setBirthdate(e.target.value)}
               />
