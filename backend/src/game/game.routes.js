@@ -152,8 +152,8 @@ router.post("/child/:childId/reward", async (req, res) => {
 });
 
 /**
- * GET /api/game/messages
- * Game fetches messages for a child using childCode
+ * GET /api/game/messages?childCode=XXX
+ * Game fetches messages sent by the parent
  */
 router.get("/messages", async (req, res) => {
   const { childCode } = req.query;
@@ -173,7 +173,7 @@ router.get("/messages", async (req, res) => {
   const messages = await prisma.message.findMany({
     where: { childId: child.id },
     orderBy: { createdAt: "desc" },
-    take: 20, // Last 20 messages
+    take: 20,
   });
 
   res.json({
@@ -181,6 +181,42 @@ router.get("/messages", async (req, res) => {
     displayName: child.displayName,
     messages,
   });
+});
+
+/**
+ * PATCH /api/game/messages/read?childCode=XXX
+ * Game marks all unread messages as read (call when child opens the inbox)
+ * Optional body: { messageIds: ["id1","id2"] } to mark specific messages only
+ */
+router.patch("/messages/read", async (req, res) => {
+  const { childCode } = req.query;
+
+  if (!childCode) {
+    return res.status(400).json({ error: "childCode is required" });
+  }
+
+  const child = await prisma.child.findUnique({
+    where: { childCode },
+  });
+
+  if (!child) {
+    return res.status(404).json({ error: "Invalid child code" });
+  }
+
+  const { messageIds } = req.body ?? {};
+
+  const where = {
+    childId: child.id,
+    read: false,
+    ...(Array.isArray(messageIds) && messageIds.length > 0 && { id: { in: messageIds } }),
+  };
+
+  const result = await prisma.message.updateMany({
+    where,
+    data: { read: true },
+  });
+
+  res.json({ markedRead: result.count });
 });
 
 export default router;
