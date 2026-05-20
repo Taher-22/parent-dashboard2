@@ -92,9 +92,13 @@ model Reward {
 
 model TimeControls {
   id                 String   @id @default(cuid())
-  dailyMinutes       Int
+  dailyMinutes       Int      @default(60)
+  sessionMinutes     Int      @default(25)
+  breakMinutes       Int      @default(7)
   allowedFrom        String?  // "16:00"
   allowedTo          String?  // "18:00"
+  bedtimeBlock       String?  // "20:30" — time after which access is blocked
+  blockAfterBedtime  Boolean  @default(true)
   maxSessionsAllowed Int?
 
   childId   String   @unique

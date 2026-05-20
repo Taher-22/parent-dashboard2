@@ -154,13 +154,18 @@ router.get("/:childId/time-controls", requireAuth, async (req, res) => {
     return res.status(404).json({ message: "Child not found" });
   }
 
-  // If no time controls exist, create default
+  // If no time controls exist, create with defaults
   if (!child.timeControls) {
     const newTimeControls = await prisma.timeControls.create({
       data: {
-        dailyMinutes: 45,
+        dailyMinutes: 60,
+        sessionMinutes: 25,
+        breakMinutes: 7,
         allowedFrom: "16:00",
         allowedTo: "18:00",
+        bedtimeBlock: "20:30",
+        blockAfterBedtime: true,
+        maxSessionsAllowed: 3,
         childId,
       },
     });
@@ -176,9 +181,13 @@ router.get("/:childId/time-controls", requireAuth, async (req, res) => {
  */
 router.put("/:childId/time-controls", requireAuth, async (req, res) => {
   const { childId } = req.params;
-  const { dailyMinutes, allowedFrom, allowedTo } = req.body;
+  const {
+    dailyMinutes, sessionMinutes, breakMinutes,
+    allowedFrom, allowedTo,
+    bedtimeBlock, blockAfterBedtime,
+    maxSessionsAllowed,
+  } = req.body;
 
-  // Verify child belongs to this parent
   const child = await prisma.child.findFirst({
     where: { id: childId, parentId: req.user.id },
   });
@@ -187,18 +196,27 @@ router.put("/:childId/time-controls", requireAuth, async (req, res) => {
     return res.status(404).json({ message: "Child not found" });
   }
 
-  // Upsert time controls
   const timeControls = await prisma.timeControls.upsert({
     where: { childId },
     update: {
-      ...(dailyMinutes !== undefined && { dailyMinutes }),
-      ...(allowedFrom !== undefined && { allowedFrom }),
-      ...(allowedTo !== undefined && { allowedTo }),
+      ...(dailyMinutes        !== undefined && { dailyMinutes }),
+      ...(sessionMinutes      !== undefined && { sessionMinutes }),
+      ...(breakMinutes        !== undefined && { breakMinutes }),
+      ...(allowedFrom         !== undefined && { allowedFrom }),
+      ...(allowedTo           !== undefined && { allowedTo }),
+      ...(bedtimeBlock        !== undefined && { bedtimeBlock }),
+      ...(blockAfterBedtime   !== undefined && { blockAfterBedtime }),
+      ...(maxSessionsAllowed  !== undefined && { maxSessionsAllowed }),
     },
     create: {
-      dailyMinutes: dailyMinutes ?? 45,
-      allowedFrom: allowedFrom ?? "16:00",
-      allowedTo: allowedTo ?? "18:00",
+      dailyMinutes:       dailyMinutes       ?? 60,
+      sessionMinutes:     sessionMinutes     ?? 25,
+      breakMinutes:       breakMinutes       ?? 7,
+      allowedFrom:        allowedFrom        ?? "16:00",
+      allowedTo:          allowedTo          ?? "18:00",
+      bedtimeBlock:       bedtimeBlock       ?? "20:30",
+      blockAfterBedtime:  blockAfterBedtime  ?? true,
+      maxSessionsAllowed: maxSessionsAllowed ?? 3,
       childId,
     },
   });
