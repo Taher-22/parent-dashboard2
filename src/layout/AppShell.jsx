@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
 
 import Sidebar from "../ui/Sidebar.jsx";
 import Topbar from "../ui/Topbar.jsx";
+import SpecialShell from "./SpecialShell.jsx";
+
+import { useTheme } from "../state/ThemeContext.jsx";
 
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
@@ -18,6 +23,8 @@ import NotFound from "../pages/NotFound.jsx";
 export default function AppShell() {
   const location = useLocation();
   const token = localStorage.getItem("token");
+  const { theme } = useTheme();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   /* 🔒 NOT AUTHENTICATED */
   if (!token) {
@@ -40,40 +47,51 @@ export default function AppShell() {
     );
   }
 
-  /* ✅ AUTHENTICATED */
+  /* ✨ SPECIAL theme → completely different layout */
+  if (theme === "special") {
+    return <SpecialShell />;
+  }
+
+  /* ✅ AUTHENTICATED — classic layout (Light / Dark) with mobile drawer for the sidebar */
   return (
     <div className="adapted-bg relative min-h-screen overflow-hidden">
-      {/* Background blobs (CSS decides when visible) */}
       <div className="shape one" />
       <div className="shape two" />
       <div className="shape three" />
-
-      {/* Grain */}
       <div className="grain pointer-events-none absolute inset-0" />
 
-      <div className="relative z-10 max-w-[1400px] mx-auto p-4 md:p-6">
+      <div className="relative z-10 max-w-[1400px] mx-auto p-3 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 md:gap-6">
 
-          <aside className="lg:sticky lg:top-6 self-start">
+          {/* Sidebar — inline on lg+, drawer on smaller */}
+          <aside className="hidden lg:block lg:sticky lg:top-6 self-start">
             <Sidebar />
           </aside>
 
-          <div className="flex flex-col gap-4 md:gap-6">
-            <header className="lg:sticky lg:top-6 z-20">
-              <Topbar />
+          <div className="flex flex-col gap-3 md:gap-6">
+            <header className="lg:sticky lg:top-6 z-20 flex items-center gap-2">
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="lg:hidden panel stroke rounded-2xl p-3 shrink-0"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              <div className="flex-1 min-w-0">
+                <Topbar />
+              </div>
             </header>
 
-            <main className="panel stroke rounded-2xl p-4 md:p-6">
+            <main className="panel stroke rounded-2xl p-3 md:p-6 overflow-x-auto">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={location.pathname}
                   initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -14, filter: "blur(6px)" }}
-                  transition={{
-                    duration: 0.45,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <Routes location={location}>
                     <Route path="/" element={<Navigate to="/overview" replace />} />
@@ -89,10 +107,45 @@ export default function AppShell() {
                 </motion.div>
               </AnimatePresence>
             </main>
-
           </div>
         </div>
       </div>
+
+      {/* MOBILE SIDEBAR DRAWER */}
+      <AnimatePresence>
+        {mobileNavOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileNavOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="fixed left-0 top-0 bottom-0 w-72 z-50 p-3 lg:hidden overflow-y-auto"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              <div onClick={(e) => e.stopPropagation()} className="h-full">
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={() => setMobileNavOpen(false)}
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+                    aria-label="Close menu"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <Sidebar />
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

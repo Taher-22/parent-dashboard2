@@ -68,7 +68,7 @@ export default function Topbar() {
     : null;
 
   return (
-    <div className="panel stroke rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+    <div className="panel stroke rounded-2xl px-3 md:px-5 py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 flex-wrap sm:flex-nowrap">
       {/* LEFT — Child Info */}
       <div className="flex items-center gap-3">
         <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-sky-400/30 via-emerald-300/25 to-purple-400/30 border border-white/10 grid place-items-center">
@@ -144,7 +144,7 @@ export default function Topbar() {
       </div>
 
       {/* RIGHT — Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-end">
         {activeChild && (
           isStopped
             ? <Badge tone="red">Stopped</Badge>
@@ -160,15 +160,15 @@ export default function Topbar() {
             title={isStopped
               ? `Resume ${activeChild.displayName} — let them play again`
               : `Force stop ${activeChild.displayName} — show the blocked screen in-game`}
-            className={`rounded-xl px-4 py-2 border flex items-center gap-2 font-semibold transition-colors ${
+            className={`rounded-xl px-3 md:px-4 py-2 border flex items-center gap-2 font-semibold transition-colors ${
               isStopped
                 ? "bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300"
                 : "bg-red-500/15 hover:bg-red-500/25 border-red-500/30 text-red-300"
             }`}
           >
             {isStopped
-              ? <><Play className="h-4 w-4" /> Resume</>
-              : <><OctagonX className="h-4 w-4" /> Stop Play</>}
+              ? <><Play className="h-4 w-4" /> <span className="hidden md:inline">Resume</span></>
+              : <><OctagonX className="h-4 w-4" /> <span className="hidden md:inline">Stop Play</span></>}
           </button>
         )}
 
@@ -203,10 +203,10 @@ export default function Topbar() {
         {/* LOGOUT */}
         <button
           onClick={() => logout(navigate)}
-          className="rounded-xl px-4 py-2 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center gap-2 font-semibold"
+          className="rounded-xl px-3 md:px-4 py-2 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center gap-2 font-semibold"
         >
           <LogOut className="h-4 w-4" />
-          Logout
+          <span className="hidden md:inline">Logout</span>
         </button>
       </div>
     </div>
