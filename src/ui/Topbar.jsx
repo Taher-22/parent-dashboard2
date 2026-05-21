@@ -1,4 +1,5 @@
-import { Moon, Sun, UserRound, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Moon, Sun, UserRound, LogOut, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
@@ -10,6 +11,14 @@ export default function Topbar() {
   const navigate = useNavigate();
 
   const { kids, activeChild, setActiveChildId, loadingKids } = useChildren();
+
+  const [copied, setCopied] = useState(false);
+  function copyCode() {
+    if (!activeChild?.childCode) return;
+    navigator.clipboard.writeText(activeChild.childCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  }
 
   return (
     <div className="panel stroke rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
@@ -30,12 +39,26 @@ export default function Topbar() {
             <div className="font-semibold opacity-60">No child selected</div>
           )}
 
+          {/* CHILD CODE + COPY */}
+          {activeChild?.childCode && (
+            <button
+              onClick={copyCode}
+              className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-emerald-500/12 hover:bg-emerald-500/20 border border-emerald-500/25 px-2 py-0.5 text-[11px] font-mono font-bold tracking-widest text-emerald-300 transition-colors"
+              title="Click to copy the game access code"
+            >
+              {activeChild.childCode}
+              {copied
+                ? <Check className="h-3 w-3 opacity-80" />
+                : <Copy  className="h-3 w-3 opacity-60" />}
+            </button>
+          )}
+
           {/* CHILD SWITCHER */}
           {kids.length > 1 && (
             <select
               value={activeChild?.id || ""}
               onChange={(e) => setActiveChildId(e.target.value)}
-              className="mt-1 text-xs rounded-md bg-black/10 dark:bg-white/10 px-2 py-1"
+              className="mt-1 ml-1 text-xs rounded-md bg-black/10 dark:bg-white/10 px-2 py-1"
             >
               {kids.map((c) => (
                 <option key={c.id} value={c.id}>

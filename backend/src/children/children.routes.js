@@ -257,6 +257,17 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     where: { childId },
   });
 
+  // Per-subject session counts from the Session table.
+  const sessionGroups = await prisma.session.groupBy({
+    by: ["subjectId"],
+    where: { childId },
+    _count: { _all: true },
+  });
+  const perSubjectSessionCount = {};
+  for (const g of sessionGroups) {
+    if (g.subjectId) perSubjectSessionCount[g.subjectId] = g._count._all;
+  }
+
   // Calculate summary
   const totalSessions = await prisma.session.count({ where: { childId } });
   const totalPlayTimeSec = subjectProgress.reduce((sum, sp) => sum + sp.timeSpentSec, 0);
@@ -296,7 +307,7 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
       subjectName: sp.subject?.name || sp.subjectId,
       totalTimeSpentSec: sp.timeSpentSec,
       completion: sp.completion,
-      sessionsCount: 1, // Each record is one session
+      sessionsCount: perSubjectSessionCount[sp.subjectId] || 0,
       lastPlayedAt: sp.lastPlayedAt,
     })),
     rewards: rewards.slice(0, 20), // Last 20 rewards
