@@ -15,7 +15,10 @@ const SUBJECT_NAMES = {
   seed_s_english:   "English",
   seed_s_science:   "Science",
   seed_s_minigames: "Minigames",
+  seed_s_mainmenu:  "Main Menu",
 };
+
+const MAIN_MENU_ID = "seed_s_mainmenu";
 
 export default function Topbar() {
   const { isDark, toggleTheme } = useTheme();
@@ -70,7 +73,12 @@ export default function Topbar() {
           ) : activeChild ? (
             <div className="font-semibold flex items-center gap-2">
               {activeChild.displayName}
-              {isOnline && currentSubjectName && (
+              {isOnline && activeChild.currentSubjectId === MAIN_MENU_ID && (
+                <span className="text-[10px] uppercase tracking-wider font-bold text-sky-400">
+                  In Main Menu
+                </span>
+              )}
+              {isOnline && currentSubjectName && activeChild.currentSubjectId !== MAIN_MENU_ID && (
                 <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
                   Playing {currentSubjectName}
                 </span>

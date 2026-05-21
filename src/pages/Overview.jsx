@@ -137,8 +137,13 @@ export default function Overview() {
           {activeChild && (() => {
             const last = activeChild.lastSeenAt ? new Date(activeChild.lastSeenAt).getTime() : 0;
             const online = last > 0 && (Date.now() - last) < 60_000;
-            const subjectNames = { subj_math: "Math", seed_s_english: "English", seed_s_science: "Science", seed_s_minigames: "Minigames" };
+            const subjectNames = {
+              subj_math: "Math", seed_s_english: "English", seed_s_science: "Science",
+              seed_s_minigames: "Minigames", seed_s_mainmenu: "Main Menu",
+            };
             const subj = activeChild.currentSubjectId ? (subjectNames[activeChild.currentSubjectId] || activeChild.currentSubjectId) : null;
+            const inMenu = activeChild.currentSubjectId === "seed_s_mainmenu";
+            if (online && inMenu)  return <Badge tone="blue">In Main Menu</Badge>;
             if (online && subj)    return <Badge tone="green">Playing {subj}</Badge>;
             if (online)            return <Badge tone="green">In game</Badge>;
             if (last > 0)          return <Badge tone="blue">Offline — last seen {formatDateRelative(activeChild.lastSeenAt)}</Badge>;
