@@ -26,6 +26,20 @@ router.get("/child/:childId/progress", async (req, res) => {
     return res.status(404).json({ error: "Child not found" });
   }
 
+  // Pull session counters
+  const allSessions = await prisma.session.findMany({
+    where: { childId },
+    select: { subjectId: true, durationSec: true, endedAt: true },
+    orderBy: { endedAt: "desc" },
+  });
+  const lifetimeSessions = allSessions.length;
+  const perSubjectSessionCount = {};
+  for (const s of allSessions) {
+    if (s.subjectId) {
+      perSubjectSessionCount[s.subjectId] = (perSubjectSessionCount[s.subjectId] || 0) + 1;
+    }
+  }
+
   return res.json({
     childId: child.id,
     displayName: child.displayName,
@@ -37,8 +51,15 @@ router.get("/child/:childId/progress", async (req, res) => {
       timeSpentSec: progress.timeSpentSec,
       completion: progress.completion,
       lastPlayedAt: progress.lastPlayedAt,
+      sessionCount: perSubjectSessionCount[progress.subjectId] || 0,
     })),
     rewards: child.rewards,
+    lifetimeSessions,
+    recentSessions: allSessions.slice(0, 20).map((s) => ({
+      subjectId: s.subjectId,
+      durationSec: s.durationSec,
+      endedAt: s.endedAt,
+    })),
   });
 });
 
@@ -217,6 +238,58 @@ router.patch("/messages/read", async (req, res) => {
   });
 
   res.json({ markedRead: result.count });
+});
+
+/**
+ * POST /api/game/child/:childId/session
+ * Game posts a finished session. Body: { subjectId?, durationSec, completion?, startedAt? }
+ */
+router.post("/child/:childId/session", async (req, res) => {
+  const { childId } = req.params;
+  const { subjectId, durationSec, completion, startedAt } = req.body ?? {};
+
+  if (typeof durationSec !== "number" || durationSec < 0) {
+    return res.status(400).json({ error: "durationSec is required and must be a non-negative number" });
+  }
+
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child) {
+    return res.status(404).json({ error: "Child not found" });
+  }
+
+  // Optional: validate subjectId if provided
+  if (subjectId) {
+    const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+    if (!subject) {
+      return res.status(404).json({ error: "Subject not found" });
+    }
+  }
+
+  const session = await prisma.session.create({
+    data: {
+      childId,
+      subjectId: subjectId || null,
+      durationSec,
+      completion: typeof completion === "number" ? completion : null,
+      startedAt: startedAt ? new Date(startedAt) : null,
+    },
+  });
+
+  // Lifetime total after this insert
+  const lifetimeSessions = await prisma.session.count({ where: { childId } });
+
+  return res.status(201).json({
+    session: {
+      id: session.id,
+      childId: session.childId,
+      subjectId: session.subjectId,
+      durationSec: session.durationSec,
+      completion: session.completion,
+      startedAt: session.startedAt,
+      endedAt: session.endedAt,
+    },
+    lifetimeSessions,
+  });
 });
 
 export default router;

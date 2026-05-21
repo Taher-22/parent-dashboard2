@@ -258,7 +258,7 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
   });
 
   // Calculate summary
-  const totalSessions = subjectProgress.length;
+  const totalSessions = await prisma.session.count({ where: { childId } });
   const totalPlayTimeSec = subjectProgress.reduce((sum, sp) => sum + sp.timeSpentSec, 0);
   const totalCoinsEarned = child.coins;
   const averageCompletion = subjectProgress.length > 0
