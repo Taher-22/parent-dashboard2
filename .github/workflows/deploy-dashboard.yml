@@ -1,0 +1,56 @@
+name: Deploy Dashboard to Hostinger
+
+# Triggers on any push to main, except changes that only touch the backend or docs.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'backend/**'
+      - '**.md'
+      - '.gitignore'
+  # Allows you to manually run the workflow from the Actions tab if you ever need to.
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-dashboard
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy dist/ via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Local folder to upload from. Note the trailing slash — required by the action.
+          local-dir: ./dist/
+          # Remote folder on the server (e.g. /public_html/ or /public_html/neuroquest/).
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          # Incremental: only files whose size/hash changed are uploaded after the first run.
+          # First run uploads everything.
+          state-name: .ftp-deploy-sync-state.json
+          # Don't delete anything outside the dist tree (e.g. .htaccess, custom files).
+          # Set to true once you're confident, to also remove stale assets.
+          dangerous-clean-slate: false
+          # Files in dist/ to skip (none for now).
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
