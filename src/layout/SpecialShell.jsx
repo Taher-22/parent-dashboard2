@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation, NavLink, useNavigate } from "reac
 import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Clock, BarChart3, Bot, Layers, MessageSquare,
-  Sun, Moon, Sparkles, OctagonX, Play, LogOut, Download, Menu, X,
+  Sun, Moon, Sparkles, OctagonX, Play, LogOut, Download, Settings,
   ChevronDown, Check,
 } from "lucide-react";
 
@@ -21,7 +21,6 @@ import SubjectDetails from "../pages/SubjectDetails.jsx";
 import Messages from "../pages/Messages.jsx";
 import NotFound from "../pages/NotFound.jsx";
 
-// Primary in-app routes that appear in the top nav (desktop) and the bottom tab bar (mobile).
 const NAV = [
   { label: "Overview", path: "/overview",     icon: LayoutDashboard },
   { label: "Time",     path: "/time-control", icon: Clock           },
@@ -31,9 +30,9 @@ const NAV = [
   { label: "AI",       path: "/ai",           icon: Bot             },
 ];
 
-// Subset of NAV shown in the mobile bottom tab bar (fits comfortably on phones).
-// "More" pops the drawer for the remaining items + actions.
-const MOBILE_TABS = ["/overview", "/subjects", "/reports", "/messages"];
+// Mobile bottom tab bar — 5 primary destinations, no "More" button.
+// AI sits next to Messages. Time / Download / Theme / Logout live in the settings sheet.
+const MOBILE_TABS = ["/overview", "/subjects", "/reports", "/messages", "/ai"];
 
 const GAME_DOWNLOAD_URL =
   "https://drive.google.com/uc?export=download&id=1g0mClaUBd0dk3ht5AaDVtKCN1ex8ZBxp";
@@ -50,8 +49,8 @@ export default function SpecialShell() {
   const { theme, setTheme } = useTheme();
   const { kids, activeChild, setActiveChildId } = useChildren();
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [kidsOpen, setKidsOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);   // mobile bottom sheet
+  const [kidsOpen, setKidsOpen] = useState(false);     // desktop child dropdown
   const [pendingStop, setPendingStop] = useState(null);
 
   const isStopped = pendingStop !== null ? pendingStop : !!activeChild?.forceStopped;
@@ -85,7 +84,6 @@ export default function SpecialShell() {
         className="relative z-30 mx-auto max-w-[1800px] px-3 md:px-6 pt-3 md:pt-6"
       >
         <div className="panel stroke rounded-2xl px-3 md:px-4 py-2.5 flex items-center gap-2 md:gap-3">
-
           {/* Brand */}
           <div className="flex items-center gap-2.5 shrink-0">
             <motion.div
@@ -127,7 +125,6 @@ export default function SpecialShell() {
               </NavLink>
             ))}
 
-            {/* Download — separate "tab" that opens the .exe */}
             <a
               href={GAME_DOWNLOAD_URL}
               target="_blank"
@@ -142,9 +139,9 @@ export default function SpecialShell() {
 
           <div className="flex-1 md:hidden" />
 
-          {/* Active child + Stop — INLINE next to each other */}
+          {/* Active child + Stop — inline */}
           {activeChild && (
-            <div className="hidden sm:flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <motion.button
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.94 }}
@@ -199,7 +196,7 @@ export default function SpecialShell() {
             </div>
           )}
 
-          {/* Theme switch */}
+          {/* Theme switch (desktop) */}
           <div className="hidden md:flex items-center gap-0.5 rounded-xl border border-white/15 p-0.5 shrink-0">
             {THEMES.map(({ id, icon: Icon }) => (
               <button
@@ -219,23 +216,23 @@ export default function SpecialShell() {
             ))}
           </div>
 
-          {/* Logout — now on the top bar */}
+          {/* Logout (desktop) */}
           <button
             onClick={() => logout(navigate)}
             title="Logout"
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-colors shrink-0"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-colors shrink-0"
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden lg:inline text-sm font-semibold">Logout</span>
           </button>
 
-          {/* Mobile hamburger */}
+          {/* Mobile settings gear (replaces hamburger) */}
           <button
-            onClick={() => setMenuOpen(true)}
+            onClick={() => setSheetOpen(true)}
             className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors shrink-0"
-            aria-label="Open menu"
+            aria-label="Open settings"
           >
-            <Menu className="h-5 w-5" />
+            <Settings className="h-5 w-5" />
           </button>
         </div>
       </motion.nav>
@@ -266,7 +263,7 @@ export default function SpecialShell() {
         </AnimatePresence>
       </main>
 
-      {/* ───────── MOBILE BOTTOM TAB BAR ───────── */}
+      {/* ───────── MOBILE BOTTOM TAB BAR — 5 primary destinations ───────── */}
       <motion.nav
         initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0,  opacity: 1 }}
@@ -296,120 +293,130 @@ export default function SpecialShell() {
               )}
             </NavLink>
           ))}
-
-          {/* More — opens drawer for the rest of the nav + actions */}
-          <button onClick={() => setMenuOpen(true)} className="flex-1">
-            <div className="flex flex-col items-center gap-0.5 py-1.5 rounded-xl opacity-55">
-              <Menu className="h-5 w-5" />
-              <span className="text-[10px] font-bold tracking-wide">More</span>
-            </div>
-          </button>
         </div>
       </motion.nav>
 
-      {/* ───────── MOBILE DRAWER (rest of nav + actions) ───────── */}
+      {/* ───────── MOBILE BOTTOM SHEET (settings / secondary actions) ───────── */}
       <AnimatePresence>
-        {menuOpen && (
+        {sheetOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMenuOpen(false)}
+              onClick={() => setSheetOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
             />
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 30 }}
-              className="fixed right-0 top-0 bottom-0 w-72 panel stroke z-50 p-4 md:hidden flex flex-col gap-2 overflow-y-auto"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 120 || info.velocity.y > 500) setSheetOpen(false);
+              }}
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl px-4 pt-3 pb-6 max-h-[85vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-extrabold text-lg">NeuroQuest</span>
-                <button onClick={() => setMenuOpen(false)} className="p-1.5 rounded-lg bg-white/10">
-                  <X className="h-4 w-4" />
+              {/* Drag handle */}
+              <div className="flex justify-center mb-3 cursor-grab active:cursor-grabbing">
+                <div className="w-12 h-1.5 rounded-full bg-white/20" />
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg tracking-tight">Settings</h3>
+                <button
+                  onClick={() => setSheetOpen(false)}
+                  className="text-xs font-semibold opacity-60 hover:opacity-100"
+                >
+                  Done
                 </button>
               </div>
 
-              {/* Active child + inline stop */}
-              {activeChild && (
-                <div className="px-3 py-2.5 rounded-xl bg-white/5 mb-1 flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] uppercase tracking-widest opacity-50">Active child</div>
-                    <div className="font-semibold text-sm truncate">{activeChild.displayName}</div>
-                  </div>
-                  <button
-                    onClick={toggleStop}
-                    title={isStopped ? "Resume" : "Stop"}
-                    className={`p-1.5 rounded-lg border transition-colors ${
-                      isStopped
-                        ? "bg-emerald-500/20 border-emerald-500/35 text-emerald-300"
-                        : "bg-red-500/15 border-red-500/30 text-red-300"
-                    }`}
-                  >
-                    {isStopped ? <Play className="h-4 w-4" /> : <OctagonX className="h-4 w-4" />}
-                  </button>
+              {/* Time control */}
+              <NavLink
+                to="/time-control"
+                onClick={() => setSheetOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors mb-2"
+              >
+                <div className="h-9 w-9 rounded-lg bg-amber-500/15 border border-amber-500/25 grid place-items-center">
+                  <Clock className="h-4 w-4 text-amber-300" />
                 </div>
-              )}
-
-              {/* Full nav (including ones not in bottom tabs) */}
-              {NAV.map(({ label, path, icon: Icon }) => (
-                <NavLink
-                  key={path}
-                  to={path}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
-                      isActive
-                        ? "bg-fuchsia-500/20 text-fuchsia-100"
-                        : "opacity-70 hover:opacity-100 hover:bg-white/5"
-                    }`
-                  }
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </NavLink>
-              ))}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">Time Control</div>
+                  <div className="text-[11px] opacity-55">Daily limits, bedtime, breaks</div>
+                </div>
+              </NavLink>
 
               {/* Download */}
               <a
                 href={GAME_DOWNLOAD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 transition-colors"
+                onClick={() => setSheetOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors mb-2"
               >
-                <Download className="h-4 w-4" />
-                Download Game
+                <div className="h-9 w-9 rounded-lg bg-sky-500/15 border border-sky-500/25 grid place-items-center">
+                  <Download className="h-4 w-4 text-sky-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm">Download Game</div>
+                  <div className="text-[11px] opacity-55">Latest Windows .exe</div>
+                </div>
               </a>
 
-              <div className="mt-auto pt-3 border-t border-white/10 flex flex-col gap-2">
-                {/* Theme switch */}
-                <div className="text-[10px] uppercase tracking-widest opacity-50 px-1">Theme</div>
-                <div className="flex items-center gap-1 rounded-xl border border-white/15 p-1">
+              {/* Child switcher (only when 2+ kids) */}
+              {kids.length > 1 && activeChild && (
+                <div className="px-3 py-3 rounded-xl bg-white/5 mb-2">
+                  <div className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Switch child</div>
+                  <div className="flex flex-col gap-1">
+                    {kids.map((k) => (
+                      <button
+                        key={k.id}
+                        onClick={() => { setActiveChildId(k.id); setSheetOpen(false); }}
+                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-sm font-semibold ${
+                          k.id === activeChild.id
+                            ? "bg-fuchsia-500/15 text-fuchsia-100"
+                            : "opacity-70 hover:opacity-100 hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="truncate">{k.displayName}</span>
+                        {k.id === activeChild.id && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Theme switch */}
+              <div className="px-3 py-3 rounded-xl bg-white/5 mb-2">
+                <div className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Theme</div>
+                <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1">
                   {THEMES.map(({ id, icon: Icon }) => (
                     <button
                       key={id}
                       onClick={() => setTheme(id)}
-                      className={`flex-1 p-2 rounded-lg flex items-center justify-center transition-colors ${
+                      className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold capitalize transition-colors ${
                         theme === id ? "bg-fuchsia-500/25 text-fuchsia-100" : "opacity-55"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-3.5 w-3.5" />
+                      {id}
                     </button>
                   ))}
                 </div>
-
-                {/* Logout */}
-                <button
-                  onClick={() => { setMenuOpen(false); logout(navigate); }}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-semibold text-sm transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
               </div>
+
+              {/* Logout */}
+              <button
+                onClick={() => { setSheetOpen(false); logout(navigate); }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-semibold text-sm transition-colors mt-1"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </motion.div>
           </>
         )}
