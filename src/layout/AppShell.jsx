@@ -63,13 +63,19 @@ export default function AppShell() {
       <div className="relative z-10 max-w-[1400px] mx-auto p-3 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 md:gap-6">
 
-          {/* Sidebar — inline on lg+, drawer on smaller */}
-          <aside className="hidden lg:block lg:sticky lg:top-6 self-start">
+          {/* Sidebar — inline on lg+, drawer on smaller.
+              `lg:!block` + inline style for belt-and-braces hiding on phones in case
+              Tailwind purge or some other override strips `hidden`. */}
+          <aside
+            className="hidden lg:!block lg:sticky lg:top-6 self-start"
+            style={{ display: undefined }}
+          >
             <Sidebar />
           </aside>
 
-          <div className="flex flex-col gap-3 md:gap-6">
-            <header className="lg:sticky lg:top-6 z-20 flex items-center gap-2">
+          <div className="flex flex-col gap-3 md:gap-6 min-w-0">
+            {/* Sticky on every breakpoint so the hamburger stays in reach when scrolling. */}
+            <header className="sticky top-3 md:top-6 z-30 flex items-center gap-2">
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileNavOpen(true)}
