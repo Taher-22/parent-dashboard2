@@ -329,6 +329,21 @@
 }
 
 /* =====================================================
+   HIDE SCROLLBARS (global — desktop & mobile)
+   Scrolling still works (mouse wheel, trackpad, keyboard,
+   touch). Just removes the visible track/thumb.
+===================================================== */
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+* {
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE / old Edge */
+}
+
+/* =====================================================
    REDUCED MOTION
 ===================================================== */
 @media (prefers-reduced-motion: reduce) {
