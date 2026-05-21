@@ -228,6 +228,21 @@
     inset 0 0 0 1px rgba(255,255,255,0.10);
 }
 
+/* Special — make the aurora shapes feel like distant ambient lighting,
+   not big saturated blocks of color. Heavier blur + much lower opacity. */
+[data-theme="special"] .shape {
+  opacity: 0.22;
+  filter: blur(80px);
+}
+[data-theme="special"] .shape.one   { top: -260px; left: -260px; }
+[data-theme="special"] .shape.two   { bottom: -320px; right: -320px; }
+[data-theme="special"] .shape.three { top: 40%; left: 75%; }
+
+/* Special — slightly mute the grain so panels read crisper */
+[data-theme="special"] .grain {
+  opacity: 0.08;
+}
+
 /* =====================================================
    STROKE (SUBTLE BORDER GLOW)
 ===================================================== */

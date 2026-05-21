@@ -82,7 +82,7 @@ export default function SpecialShell() {
         initial={{ y: -28, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-30 mx-auto max-w-[1400px] px-3 md:px-6 pt-3 md:pt-6"
+        className="relative z-30 mx-auto max-w-[1800px] px-3 md:px-6 pt-3 md:pt-6"
       >
         <div className="panel stroke rounded-2xl px-3 md:px-4 py-2.5 flex items-center gap-2 md:gap-3">
 
@@ -241,7 +241,7 @@ export default function SpecialShell() {
       </motion.nav>
 
       {/* ───────── CONTENT ───────── */}
-      <main className="relative z-10 mx-auto max-w-[1400px] px-3 md:px-6 py-4 md:py-6 pb-24 md:pb-10">
+      <main className="relative z-10 mx-auto max-w-[1800px] px-3 md:px-6 py-4 md:py-6 pb-24 md:pb-10">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
