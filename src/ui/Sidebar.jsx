@@ -11,7 +11,12 @@ import {
   X,
   Copy,
   Check,
+  Download,
 } from "lucide-react";
+
+// Direct Google Drive download URL for the game .exe
+// (converted from drive.google.com/file/d/{id}/view → drive.google.com/uc?export=download&id={id})
+const GAME_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1g0mClaUBd0dk3ht5AaDVtKCN1ex8ZBxp";
 import { useState } from "react";
 import { useChildren } from "../state/ChildrenContext.jsx";
 
@@ -134,6 +139,22 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Download Game */}
+      <div className="pt-3 border-t border-white/10">
+        <a
+          href={GAME_DOWNLOAD_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+                     bg-sky-500/10 hover:bg-sky-500/18 border border-sky-500/25
+                     text-sky-300 font-semibold text-sm transition-colors"
+          title="Downloads the latest game .exe from Google Drive"
+        >
+          <Download className="h-4 w-4 flex-shrink-0" />
+          Download Game
+        </a>
+      </div>
 
       {/* Add Child */}
       <div className="pt-3 border-t border-white/10">
