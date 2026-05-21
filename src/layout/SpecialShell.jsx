@@ -467,29 +467,34 @@ export default function SpecialShell() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(_, info) => {
-                if (info.offset.y > 120 || info.velocity.y > 500) setSheetOpen(false);
-              }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl px-4 pt-3 pb-6 max-h-[85vh] overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl h-[88vh] flex flex-col"
             >
-              {/* Drag handle */}
-              <div className="flex justify-center mb-3 cursor-grab active:cursor-grabbing">
+              {/* Drag handle row — also functions as a tap-to-close target.
+                  Drag is restricted to this row so the body below scrolls normally. */}
+              <motion.div
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(_, info) => {
+                  if (info.offset.y > 80 || info.velocity.y > 400) setSheetOpen(false);
+                }}
+                className="flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+              >
                 <div className="w-12 h-1.5 rounded-full bg-white/20" />
-              </div>
+              </motion.div>
 
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-white/5">
                 <h3 className="font-extrabold text-lg tracking-tight">Settings</h3>
                 <button
                   onClick={() => setSheetOpen(false)}
-                  className="text-xs font-semibold opacity-60 hover:opacity-100"
+                  className="text-sm font-semibold text-fuchsia-300 hover:text-fuchsia-200"
                 >
                   Done
                 </button>
               </div>
 
+              {/* Scrollable body */}
+              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-8">
               {/* Add Child */}
               <button
                 onClick={openAddChild}
@@ -586,6 +591,7 @@ export default function SpecialShell() {
                 <LogOut className="h-4 w-4" />
                 Logout
               </button>
+              </div>
             </motion.div>
           </>
         )}
