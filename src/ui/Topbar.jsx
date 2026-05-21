@@ -45,8 +45,8 @@ export default function Topbar() {
     setPendingStop(next);
     try {
       await setChildForceStop(activeChild.id, next);
-      // Clear the optimistic value once the context's poll has had a chance to refresh.
-      setTimeout(() => setPendingStop(null), 20000);
+      // TEMPORARY: 2s while children poll is on 1s. Bump back to 20000 when polling slows down.
+      setTimeout(() => setPendingStop(null), 2000);
     } catch {
       setPendingStop(!next); // revert
       alert("Couldn't update. Try again.");
