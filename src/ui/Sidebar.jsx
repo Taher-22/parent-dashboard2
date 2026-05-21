@@ -16,7 +16,7 @@ import {
 
 // Direct Google Drive download URL for the game .exe
 // (converted from drive.google.com/file/d/{id}/view → drive.google.com/uc?export=download&id={id})
-const GAME_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1g0mClaUBd0dk3ht5AaDVtKCN1ex8ZBxp";
+const GAME_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1-zN-VFrfzwfPAtmuXPRCWCol1VzS450s";
 import { useState } from "react";
 import { useChildren } from "../state/ChildrenContext.jsx";
 
