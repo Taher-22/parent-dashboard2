@@ -40,6 +40,10 @@ model Child {
   mentalHealthConditions String?  // free-text or JSON notes
   avatarConfig          String?   // JSON object for avatar customisation
 
+  // Presence — set by the game's POST /heartbeat. Use staleness vs lastSeenAt to derive online status.
+  lastSeenAt            DateTime?
+  currentSubjectId      String?
+
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 

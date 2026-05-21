@@ -136,6 +136,20 @@ setActiveChildIdState((prev) => {
     return () => window.removeEventListener("token-changed", handleStorageChange);
   }, []);
 
+  // Poll children every 20s so presence (lastSeenAt) stays fresh in the UI.
+  // Silent — bypasses reloadChildren so we don't flicker the loading flag.
+  useEffect(() => {
+    if (!me?.id) return;
+    const id = setInterval(async () => {
+      if (document.hidden) return;
+      try {
+        const list = await getMyChildren();
+        if (Array.isArray(list)) setKids(list);
+      } catch { /* silent — auth errors handled elsewhere */ }
+    }, 20000);
+    return () => clearInterval(id);
+  }, [me?.id]);
+
   const value = useMemo(
     () => ({
       me,

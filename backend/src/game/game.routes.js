@@ -13,6 +13,8 @@ router.get("/child/:childId/progress", async (req, res) => {
       displayName: true,
       coins: true,
       timeControls: true,
+      lastSeenAt: true,
+      currentSubjectId: true,
       subjects: {
         include: {
           subject: true,
@@ -45,6 +47,8 @@ router.get("/child/:childId/progress", async (req, res) => {
     displayName: child.displayName,
     coins: child.coins,
     timeControls: child.timeControls,
+    lastSeenAt: child.lastSeenAt,
+    currentSubjectId: child.currentSubjectId,
     subjects: child.subjects.map((progress) => ({
       subjectId: progress.subjectId,
       subjectName: progress.subject?.name || "",
@@ -238,6 +242,34 @@ router.patch("/messages/read", async (req, res) => {
   });
 
   res.json({ markedRead: result.count });
+});
+
+/**
+ * POST /api/game/child/:childId/heartbeat
+ * Game pings every ~20s while a session is active. Body: { subjectId? }
+ * Updates child.lastSeenAt = now + child.currentSubjectId.
+ * The dashboard treats `now - lastSeenAt < 60s` as "online".
+ */
+router.post("/child/:childId/heartbeat", async (req, res) => {
+  const { childId } = req.params;
+  const { subjectId } = req.body ?? {};
+
+  try {
+    const child = await prisma.child.update({
+      where: { id: childId },
+      data: {
+        lastSeenAt: new Date(),
+        ...(subjectId !== undefined && { currentSubjectId: subjectId || null }),
+      },
+      select: { id: true, lastSeenAt: true, currentSubjectId: true },
+    });
+    res.json({ ok: true, lastSeenAt: child.lastSeenAt, currentSubjectId: child.currentSubjectId });
+  } catch (err) {
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Child not found" });
+    }
+    throw err;
+  }
 });
 
 /**

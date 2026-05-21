@@ -116,15 +116,34 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* ACTIVE CHILD */}
+      {/* ACTIVE CHILD + PRESENCE */}
       <Card>
-        <div className="flex items-center justify-between">
-          <div className="font-semibold text-lg">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="font-semibold text-lg flex items-center gap-3">
+            {activeChild && (() => {
+              const last = activeChild.lastSeenAt ? new Date(activeChild.lastSeenAt).getTime() : 0;
+              const online = last > 0 && (Date.now() - last) < 60_000;
+              return (
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${online ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}
+                  title={online ? "In game" : "Offline"}
+                />
+              );
+            })()}
             {loadingKids ? "Loading child..." :
              activeChild ? `Child: ${activeChild.displayName}` :
                            "No child added yet"}
           </div>
-          <Badge tone="blue">Mode: {activeChild ? "Active" : "Inactive"}</Badge>
+          {activeChild && (() => {
+            const last = activeChild.lastSeenAt ? new Date(activeChild.lastSeenAt).getTime() : 0;
+            const online = last > 0 && (Date.now() - last) < 60_000;
+            const subjectNames = { subj_math: "Math", seed_s_english: "English", seed_s_science: "Science", seed_s_minigames: "Minigames" };
+            const subj = activeChild.currentSubjectId ? (subjectNames[activeChild.currentSubjectId] || activeChild.currentSubjectId) : null;
+            if (online && subj)    return <Badge tone="green">Playing {subj}</Badge>;
+            if (online)            return <Badge tone="green">In game</Badge>;
+            if (last > 0)          return <Badge tone="blue">Offline — last seen {formatDateRelative(activeChild.lastSeenAt)}</Badge>;
+            return <Badge tone="blue">Never connected</Badge>;
+          })()}
         </div>
       </Card>
 

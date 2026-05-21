@@ -1,10 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Moon, Sun, UserRound, LogOut, Copy, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
 import Badge from "./Badge.jsx";
 import { logout } from "../three/auth/auth";
+
+// "Online" if we saw a heartbeat in the last 60s.
+const ONLINE_THRESHOLD_MS = 60_000;
+
+// Map backend subject IDs to friendly names. Add to this when new subjects ship.
+const SUBJECT_NAMES = {
+  subj_math:        "Math",
+  seed_s_english:   "English",
+  seed_s_science:   "Science",
+  seed_s_minigames: "Minigames",
+};
 
 export default function Topbar() {
   const { isDark, toggleTheme } = useTheme();
@@ -20,12 +31,35 @@ export default function Topbar() {
     setTimeout(() => setCopied(false), 1800);
   }
 
+  // Re-render every 5s so the "online" derived flag updates as time passes
+  // even if no new data arrives (e.g., game disconnects → goes offline 60s later).
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => forceTick((n) => n + 1), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const lastSeen = activeChild?.lastSeenAt ? new Date(activeChild.lastSeenAt).getTime() : 0;
+  const isOnline = lastSeen > 0 && (Date.now() - lastSeen) < ONLINE_THRESHOLD_MS;
+  const currentSubjectName = activeChild?.currentSubjectId
+    ? (SUBJECT_NAMES[activeChild.currentSubjectId] || activeChild.currentSubjectId)
+    : null;
+
   return (
     <div className="panel stroke rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
       {/* LEFT — Child Info */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-400/30 via-emerald-300/25 to-purple-400/30 border border-white/10 grid place-items-center">
+        <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-sky-400/30 via-emerald-300/25 to-purple-400/30 border border-white/10 grid place-items-center">
           <UserRound className="h-5 w-5 opacity-80" />
+          {/* Online indicator dot on the avatar */}
+          {activeChild && (
+            <span
+              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[color:var(--bg,#0c0d16)] ${
+                isOnline ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
+              }`}
+              title={isOnline ? "In game" : "Offline"}
+            />
+          )}
         </div>
 
         <div>
@@ -34,7 +68,19 @@ export default function Topbar() {
           {loadingKids ? (
             <div className="font-semibold opacity-60">Loading...</div>
           ) : activeChild ? (
-            <div className="font-semibold">{activeChild.displayName}</div>
+            <div className="font-semibold flex items-center gap-2">
+              {activeChild.displayName}
+              {isOnline && currentSubjectName && (
+                <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
+                  Playing {currentSubjectName}
+                </span>
+              )}
+              {isOnline && !currentSubjectName && (
+                <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
+                  In game
+                </span>
+              )}
+            </div>
           ) : (
             <div className="font-semibold opacity-60">No child selected</div>
           )}
@@ -72,7 +118,11 @@ export default function Topbar() {
 
       {/* RIGHT — Actions */}
       <div className="flex items-center gap-3">
-        {activeChild && <Badge tone="blue">Active</Badge>}
+        {activeChild && (
+          isOnline
+            ? <Badge tone="green">Online</Badge>
+            : <Badge tone="blue">Offline</Badge>
+        )}
 
         {/* THEME TOGGLE */}
         <button
