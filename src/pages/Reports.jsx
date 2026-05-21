@@ -67,7 +67,7 @@ export default function Reports() {
       {/* ── PRINTABLE AREA (hidden on screen, visible on print) ── */}
       <div id="print-report" style={{ fontFamily: "sans-serif", padding: 32, color: "#111" }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1e3a8a", textAlign: "center" }}>
-          EduGalaxy Guardian Report
+          NeuroQuest Guardian Report
         </h1>
         <hr style={{ margin: "16px 0", borderColor: "#ccc" }} />
         <p style={{ fontSize: 18, fontWeight: 700 }}>Child: {child?.displayName ?? "—"}</p>

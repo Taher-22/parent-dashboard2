@@ -82,7 +82,7 @@ export default function Sidebar() {
 
       {/* Brand */}
       <div className="px-2 pt-1 pb-4 border-b border-white/10">
-        <div className="text-lg font-extrabold tracking-tight">EduGalaxy</div>
+        <div className="text-lg font-extrabold tracking-tight">NeuroQuest</div>
         <div className="text-xs opacity-50 mt-0.5">Parent Dashboard</div>
       </div>
 
@@ -254,7 +254,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="pt-2 text-[11px] opacity-30 px-1 select-none">
-        EduGalaxy © 2025
+        NeuroQuest © 2025
       </div>
 
     </aside>

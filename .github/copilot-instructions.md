@@ -1,4 +1,4 @@
-# Copilot / AI Agent Instructions — EduGalaxy Parent Dashboard
+# Copilot / AI Agent Instructions — NeuroQuest Parent Dashboard
 
 Short, concrete guidance to help an AI coding agent become productive in this repository.
 

@@ -21,7 +21,7 @@ app.use(
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("EduGalaxy API running ✅");
+  res.send("NeuroQuest API running ✅");
 });
 
 app.use("/api/auth", authRoutes);
