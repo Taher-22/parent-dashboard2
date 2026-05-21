@@ -240,11 +240,14 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     return res.status(404).json({ message: "Child not found" });
   }
 
-  // Get subject progress
-  const subjectProgress = await prisma.subjectProgress.findMany({
+  // Subjects we don't want surfaced as learning progress (main menu, navigation, etc.)
+  const NON_LEARNING_SUBJECT_IDS = ["seed_s_mainmenu"];
+
+  // Get subject progress (excluding non-learning subjects)
+  const subjectProgress = (await prisma.subjectProgress.findMany({
     where: { childId },
     include: { subject: true },
-  });
+  })).filter((sp) => !NON_LEARNING_SUBJECT_IDS.includes(sp.subjectId));
 
   // Get rewards
   const rewards = await prisma.reward.findMany({
@@ -267,6 +270,28 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
   for (const g of sessionGroups) {
     if (g.subjectId) perSubjectSessionCount[g.subjectId] = g._count._all;
   }
+
+  // Per-subject answer stats (correct / total).
+  const answerGroups = await prisma.answerRecord.groupBy({
+    by: ["subjectId", "isCorrect"],
+    where: { childId },
+    _count: { _all: true },
+  });
+  const perSubjectAnswers = {};
+  for (const g of answerGroups) {
+    if (!g.subjectId) continue;
+    const slot = perSubjectAnswers[g.subjectId] || (perSubjectAnswers[g.subjectId] = { correct: 0, total: 0 });
+    slot.total += g._count._all;
+    if (g.isCorrect) slot.correct += g._count._all;
+  }
+
+  // Recent wrong answers for the dashboard "needs practice" panel.
+  const recentWrong = await prisma.answerRecord.findMany({
+    where: { childId, isCorrect: false },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { id: true, subjectId: true, question: true, userAnswer: true, correctAnswer: true, createdAt: true },
+  });
 
   // Calculate summary
   const totalSessions = await prisma.session.count({ where: { childId } });
@@ -302,14 +327,21 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
       coins: child.coins,
       createdAt: child.createdAt,
     },
-    subjects: subjectProgress.map((sp) => ({
-      subjectId: sp.subjectId,
-      subjectName: sp.subject?.name || sp.subjectId,
-      totalTimeSpentSec: sp.timeSpentSec,
-      completion: sp.completion,
-      sessionsCount: perSubjectSessionCount[sp.subjectId] || 0,
-      lastPlayedAt: sp.lastPlayedAt,
-    })),
+    subjects: subjectProgress.map((sp) => {
+      const a = perSubjectAnswers[sp.subjectId] || { correct: 0, total: 0 };
+      return {
+        subjectId: sp.subjectId,
+        subjectName: sp.subject?.name || sp.subjectId,
+        totalTimeSpentSec: sp.timeSpentSec,
+        completion: sp.completion,
+        sessionsCount: perSubjectSessionCount[sp.subjectId] || 0,
+        lastPlayedAt: sp.lastPlayedAt,
+        answersCorrect: a.correct,
+        answersTotal: a.total,
+        accuracyPct: a.total > 0 ? Math.round((a.correct / a.total) * 100) : null,
+      };
+    }),
+    recentWrongAnswers: recentWrong,
     rewards: rewards.slice(0, 20), // Last 20 rewards
     timeControls,
     summary: {

@@ -42,6 +42,8 @@ router.get("/child/:childId/progress", async (req, res) => {
     }
   }
 
+  const NON_LEARNING_SUBJECT_IDS = ["seed_s_mainmenu"];
+
   return res.json({
     childId: child.id,
     displayName: child.displayName,
@@ -49,14 +51,16 @@ router.get("/child/:childId/progress", async (req, res) => {
     timeControls: child.timeControls,
     lastSeenAt: child.lastSeenAt,
     currentSubjectId: child.currentSubjectId,
-    subjects: child.subjects.map((progress) => ({
-      subjectId: progress.subjectId,
-      subjectName: progress.subject?.name || "",
-      timeSpentSec: progress.timeSpentSec,
-      completion: progress.completion,
-      lastPlayedAt: progress.lastPlayedAt,
-      sessionCount: perSubjectSessionCount[progress.subjectId] || 0,
-    })),
+    subjects: child.subjects
+      .filter((progress) => !NON_LEARNING_SUBJECT_IDS.includes(progress.subjectId))
+      .map((progress) => ({
+        subjectId: progress.subjectId,
+        subjectName: progress.subject?.name || "",
+        timeSpentSec: progress.timeSpentSec,
+        completion: progress.completion,
+        lastPlayedAt: progress.lastPlayedAt,
+        sessionCount: perSubjectSessionCount[progress.subjectId] || 0,
+      })),
     rewards: child.rewards,
     lifetimeSessions,
     recentSessions: allSessions.slice(0, 20).map((s) => ({
@@ -242,6 +246,40 @@ router.patch("/messages/read", async (req, res) => {
   });
 
   res.json({ markedRead: result.count });
+});
+
+/**
+ * POST /api/game/child/:childId/answer
+ * Game posts one answer event. Body: { subjectId?, question?, userAnswer?, correctAnswer?, isCorrect }
+ */
+router.post("/child/:childId/answer", async (req, res) => {
+  const { childId } = req.params;
+  const { subjectId, question, userAnswer, correctAnswer, isCorrect } = req.body ?? {};
+
+  if (typeof isCorrect !== "boolean") {
+    return res.status(400).json({ error: "isCorrect (boolean) is required" });
+  }
+
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child) return res.status(404).json({ error: "Child not found" });
+
+  if (subjectId) {
+    const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+    if (!subject) return res.status(404).json({ error: "Subject not found" });
+  }
+
+  const record = await prisma.answerRecord.create({
+    data: {
+      childId,
+      subjectId: subjectId || null,
+      question: question || null,
+      userAnswer: userAnswer || null,
+      correctAnswer: correctAnswer || null,
+      isCorrect,
+    },
+  });
+
+  res.status(201).json(record);
 });
 
 /**
