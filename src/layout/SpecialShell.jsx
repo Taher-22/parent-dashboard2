@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Clock, BarChart3, Bot, Layers, MessageSquare,
   Sun, Moon, Sparkles, OctagonX, Play, LogOut, Download, Settings,
-  ChevronDown, Check,
+  ChevronDown, Check, Plus, X, Copy, UserPlus,
 } from "lucide-react";
 
 import { useTheme } from "../state/ThemeContext.jsx";
@@ -47,11 +47,52 @@ export default function SpecialShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { kids, activeChild, setActiveChildId } = useChildren();
+  const { kids, activeChild, setActiveChildId, createChild } = useChildren();
 
   const [sheetOpen, setSheetOpen] = useState(false);   // mobile bottom sheet
   const [kidsOpen, setKidsOpen] = useState(false);     // desktop child dropdown
   const [pendingStop, setPendingStop] = useState(null);
+
+  // Add Child modal state
+  const [addOpen, setAddOpen] = useState(false);
+  const [newChildName, setNewChildName] = useState("");
+  const [newChildBirthdate, setNewChildBirthdate] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  function openAddChild() {
+    setSheetOpen(false);
+    setKidsOpen(false);
+    setAddOpen(true);
+  }
+  function closeAddChild() {
+    setAddOpen(false);
+    setNewChildName("");
+    setNewChildBirthdate("");
+    setGeneratedCode(null);
+    setCodeCopied(false);
+  }
+  async function handleCreateChild() {
+    if (!newChildName.trim()) return;
+    try {
+      setCreating(true);
+      const child = await createChild(newChildName.trim(), newChildBirthdate);
+      setGeneratedCode(child.childCode);
+      setNewChildName("");
+      setNewChildBirthdate("");
+    } catch {
+      alert("Failed to create child");
+    } finally {
+      setCreating(false);
+    }
+  }
+  function copyGeneratedCode() {
+    if (!generatedCode) return;
+    navigator.clipboard.writeText(generatedCode);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 1800);
+  }
 
   const isStopped = pendingStop !== null ? pendingStop : !!activeChild?.forceStopped;
   async function toggleStop() {
@@ -139,6 +180,17 @@ export default function SpecialShell() {
 
           <div className="flex-1 md:hidden" />
 
+          {/* No child yet — surface Add Child prominently */}
+          {!activeChild && kids.length === 0 && (
+            <button
+              onClick={openAddChild}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/35 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-semibold text-sm transition-colors shrink-0"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Child</span>
+            </button>
+          )}
+
           {/* Active child + Stop — inline */}
           {activeChild && (
             <div className="flex items-center gap-1 shrink-0">
@@ -168,7 +220,7 @@ export default function SpecialShell() {
                   {kids.length > 1 && <ChevronDown className="h-3 w-3 opacity-60 shrink-0" />}
                 </button>
                 <AnimatePresence>
-                  {kidsOpen && kids.length > 1 && (
+                  {kidsOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -189,6 +241,14 @@ export default function SpecialShell() {
                           {k.id === activeChild.id && <Check className="h-3.5 w-3.5" />}
                         </button>
                       ))}
+                      <div className="my-1 border-t border-white/10" />
+                      <button
+                        onClick={openAddChild}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-semibold text-emerald-300 hover:bg-emerald-500/15 transition-colors"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Add Child
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -296,6 +356,101 @@ export default function SpecialShell() {
         </div>
       </motion.nav>
 
+      {/* ───────── ADD CHILD MODAL ───────── */}
+      <AnimatePresence>
+        {addOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeAddChild}
+              className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60]"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0,  scale: 1    }}
+              exit   ={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] panel stroke rounded-2xl p-5 w-[92vw] max-w-md"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg tracking-tight flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-emerald-300" />
+                  {generatedCode ? "Child Added" : "Add Child"}
+                </h3>
+                <button
+                  onClick={closeAddChild}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {generatedCode ? (
+                <div className="space-y-3">
+                  <p className="text-sm opacity-70">
+                    Share this code with your child. They'll type it in the game once to link their account.
+                  </p>
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center gap-3">
+                    <span className="flex-1 font-mono font-black text-2xl tracking-[0.3em] text-emerald-200">
+                      {generatedCode}
+                    </span>
+                    <button
+                      onClick={copyGeneratedCode}
+                      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                      title="Copy code"
+                    >
+                      {codeCopied ? <Check className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4 opacity-70" />}
+                    </button>
+                  </div>
+                  <button
+                    onClick={closeAddChild}
+                    className="w-full py-2.5 rounded-xl bg-fuchsia-500/20 hover:bg-fuchsia-500/30 border border-fuchsia-400/30 text-fuchsia-100 font-semibold text-sm transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest opacity-55 mb-1.5 block">Name</span>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={newChildName}
+                      onChange={(e) => setNewChildName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateChild()}
+                      placeholder="Child's name"
+                      className="w-full rounded-xl px-3 py-2.5 bg-black/30 border border-white/15 text-sm text-white placeholder:text-white/30 outline-none focus:border-fuchsia-400/60 transition-colors"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest opacity-55 mb-1.5 block">Birthdate (optional)</span>
+                    <input
+                      type="date"
+                      value={newChildBirthdate}
+                      onChange={(e) => setNewChildBirthdate(e.target.value)}
+                      className="w-full rounded-xl px-3 py-2.5 bg-black/30 border border-white/15 text-sm text-white/85 outline-none focus:border-fuchsia-400/60 transition-colors"
+                    />
+                  </label>
+                  <button
+                    onClick={handleCreateChild}
+                    disabled={creating || !newChildName.trim()}
+                    className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-black font-bold text-sm transition-colors"
+                  >
+                    {creating ? "Creating…" : "Create"}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ───────── MOBILE BOTTOM SHEET (settings / secondary actions) ───────── */}
       <AnimatePresence>
         {sheetOpen && (
@@ -334,6 +489,20 @@ export default function SpecialShell() {
                   Done
                 </button>
               </div>
+
+              {/* Add Child */}
+              <button
+                onClick={openAddChild}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-colors mb-2"
+              >
+                <div className="h-9 w-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 grid place-items-center">
+                  <UserPlus className="h-4 w-4 text-emerald-300" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="font-semibold text-sm text-emerald-200">Add Child</div>
+                  <div className="text-[11px] opacity-55">Create a new game-access code</div>
+                </div>
+              </button>
 
               {/* Time control */}
               <NavLink
