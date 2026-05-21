@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, UserRound, LogOut, Copy, Check, OctagonX, Play } from "lucide-react";
+import { Moon, Sun, Sparkles, UserRound, LogOut, Copy, Check, OctagonX, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
@@ -22,7 +22,7 @@ const SUBJECT_NAMES = {
 const MAIN_MENU_ID = "seed_s_mainmenu";
 
 export default function Topbar() {
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const { kids, activeChild, setActiveChildId, loadingKids } = useChildren();
@@ -172,14 +172,33 @@ export default function Topbar() {
           </button>
         )}
 
-        {/* THEME TOGGLE */}
-        <button
-          onClick={toggleTheme}
-          className="rounded-xl px-4 py-2 border border-white/15 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 flex items-center gap-2 font-semibold"
-        >
-          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {isDark ? "Light" : "Dark"}
-        </button>
+        {/* THEME SWITCH — 3-way: Light / Dark / Special */}
+        <div className="rounded-xl border border-white/15 bg-black/5 dark:bg-white/5 p-0.5 flex items-center gap-0.5">
+          {[
+            { id: "light",   label: "Light",   icon: Sun      },
+            { id: "dark",    label: "Dark",    icon: Moon     },
+            { id: "special", label: "Special", icon: Sparkles },
+          ].map(({ id, label, icon: Icon }) => {
+            const active = theme === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setTheme(id)}
+                title={label}
+                className={`rounded-lg px-2.5 py-1.5 text-sm font-semibold flex items-center gap-1.5 transition-colors ${
+                  active
+                    ? id === "special"
+                      ? "bg-gradient-to-r from-fuchsia-500/25 via-cyan-400/20 to-amber-400/25 text-fuchsia-100 border border-fuchsia-400/30"
+                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "opacity-55 hover:opacity-100"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="hidden md:inline">{label}</span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* LOGOUT */}
         <button

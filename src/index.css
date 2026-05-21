@@ -47,6 +47,27 @@
   --border-soft: 255 255 255;
 }
 
+/* ---------- SPECIAL — AURORA GLASS ---------- */
+/* Deep violet base with magenta/cyan/amber aurora blobs.
+   Reuses the same .panel / .stroke / .shape / .grain hooks so existing UI
+   inherits the look without per-component changes. */
+[data-theme="special"] {
+  --bg-base: 14 10 32;
+
+  --blob1: 200 30 150;  /* magenta */
+  --blob2: 50 200 220;  /* cyan    */
+  --blob3: 255 180 70;  /* amber   */
+
+  --panel: 24 16 46;
+  --panel2: 32 22 58;
+
+  --text-main: 240 232 255;
+  --text-secondary: 200 192 230;
+  --text-muted: 150 138 180;
+
+  --border-soft: 255 255 255;
+}
+
 /* =====================================================
    BASE
 ===================================================== */
@@ -102,6 +123,18 @@
   /* Use the light-mode base color for page background to avoid undefined vars */
   background: rgb(var(--bg-base));
   animation: none;
+}
+
+/* Special — aurora gradient with three radial color washes layered over a deep violet base */
+[data-theme="special"] .adapted-bg {
+  background:
+    radial-gradient(60% 60% at 15% 20%, rgba(var(--blob1), 0.55) 0%, transparent 60%),
+    radial-gradient(60% 60% at 85% 30%, rgba(var(--blob2), 0.45) 0%, transparent 60%),
+    radial-gradient(55% 55% at 50% 95%, rgba(var(--blob3), 0.35) 0%, transparent 60%),
+    linear-gradient(135deg, rgb(var(--bg-base)) 0%, rgb(20 10 50) 100%);
+  background-attachment: fixed;
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: bgShift 22s ease-in-out infinite;
 }
 
 /* =====================================================
@@ -184,6 +217,17 @@
     inset 0 0 0 1px rgba(255,255,255,0.15);
 }
 
+/* Special — premium frosted glass */
+[data-theme="special"] .panel {
+  background: rgba(22, 14, 44, 0.55);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 24px 80px rgba(0,0,0,0.55),
+    0 0 24px rgba(120, 60, 200, 0.12),
+    inset 0 0 0 1px rgba(255,255,255,0.10);
+}
+
 /* =====================================================
    STROKE (SUBTLE BORDER GLOW)
 ===================================================== */
@@ -218,6 +262,31 @@
 /* No stroke in light mode */
 [data-theme="light"] .stroke::after {
   display: none;
+}
+
+/* Special — brighter iridescent stroke (uses the special-mode blob colors automatically) */
+[data-theme="special"] .stroke::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    115deg,
+    rgba(var(--blob1), 0.75),
+    rgba(var(--blob2), 0.75),
+    rgba(var(--blob3), 0.75)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.8;
 }
 
 /* =====================================================
