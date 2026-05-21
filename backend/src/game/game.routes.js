@@ -15,6 +15,7 @@ router.get("/child/:childId/progress", async (req, res) => {
       timeControls: true,
       lastSeenAt: true,
       currentSubjectId: true,
+      forceStopped: true,
       subjects: {
         include: {
           subject: true,
@@ -51,6 +52,7 @@ router.get("/child/:childId/progress", async (req, res) => {
     timeControls: child.timeControls,
     lastSeenAt: child.lastSeenAt,
     currentSubjectId: child.currentSubjectId,
+    forceStopped: child.forceStopped,
     subjects: child.subjects
       .filter((progress) => !NON_LEARNING_SUBJECT_IDS.includes(progress.subjectId))
       .map((progress) => ({

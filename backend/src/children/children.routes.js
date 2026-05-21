@@ -138,6 +138,42 @@ router.delete("/:childId", requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/children/:childId/force-stop
+ * Parent toggles a force-stop on the child. When true, the game's blocked overlay shows
+ * and overrides any local dev "force allow play" override.
+ * Body: { stopped: boolean }
+ */
+router.post("/:childId/force-stop", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const { stopped } = req.body ?? {};
+
+  if (typeof stopped !== "boolean") {
+    return res.status(400).json({ message: "stopped (boolean) is required" });
+  }
+
+  const existing = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+  if (!existing) {
+    return res.status(404).json({ message: "Child not found" });
+  }
+
+  const updated = await prisma.child.update({
+    where: { id: childId },
+    data: {
+      forceStopped: stopped,
+      forceStoppedAt: stopped ? new Date() : null,
+    },
+  });
+
+  res.json({
+    id: updated.id,
+    forceStopped: updated.forceStopped,
+    forceStoppedAt: updated.forceStoppedAt,
+  });
+});
+
+/**
  * GET /api/children/:childId/time-controls
  * Get time controls for a child
  */

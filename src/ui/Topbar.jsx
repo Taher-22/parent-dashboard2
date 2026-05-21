@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, UserRound, LogOut, Copy, Check } from "lucide-react";
+import { Moon, Sun, UserRound, LogOut, Copy, Check, OctagonX, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
 import Badge from "./Badge.jsx";
 import { logout } from "../three/auth/auth";
+import { setChildForceStop } from "../lib/api.js";
 
 // "Online" if we saw a heartbeat in the last 60s.
 const ONLINE_THRESHOLD_MS = 60_000;
@@ -32,6 +33,24 @@ export default function Topbar() {
     navigator.clipboard.writeText(activeChild.childCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  }
+
+  // Optimistic force-stop toggle so the button reacts instantly; the next 20s context poll
+  // brings the true state back from the server.
+  const [pendingStop, setPendingStop] = useState(null); // null = use server value
+  const isStopped = pendingStop !== null ? pendingStop : !!activeChild?.forceStopped;
+  async function toggleStop() {
+    if (!activeChild) return;
+    const next = !isStopped;
+    setPendingStop(next);
+    try {
+      await setChildForceStop(activeChild.id, next);
+      // Clear the optimistic value once the context's poll has had a chance to refresh.
+      setTimeout(() => setPendingStop(null), 20000);
+    } catch {
+      setPendingStop(!next); // revert
+      alert("Couldn't update. Try again.");
+    }
   }
 
   // Re-render every 5s so the "online" derived flag updates as time passes
@@ -127,9 +146,30 @@ export default function Topbar() {
       {/* RIGHT — Actions */}
       <div className="flex items-center gap-3">
         {activeChild && (
-          isOnline
-            ? <Badge tone="green">Online</Badge>
-            : <Badge tone="blue">Offline</Badge>
+          isStopped
+            ? <Badge tone="red">Stopped</Badge>
+            : isOnline
+              ? <Badge tone="green">Online</Badge>
+              : <Badge tone="blue">Offline</Badge>
+        )}
+
+        {/* PARENT FORCE-STOP per child */}
+        {activeChild && (
+          <button
+            onClick={toggleStop}
+            title={isStopped
+              ? `Resume ${activeChild.displayName} — let them play again`
+              : `Force stop ${activeChild.displayName} — show the blocked screen in-game`}
+            className={`rounded-xl px-4 py-2 border flex items-center gap-2 font-semibold transition-colors ${
+              isStopped
+                ? "bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-300"
+                : "bg-red-500/15 hover:bg-red-500/25 border-red-500/30 text-red-300"
+            }`}
+          >
+            {isStopped
+              ? <><Play className="h-4 w-4" /> Resume</>
+              : <><OctagonX className="h-4 w-4" /> Stop Play</>}
+          </button>
         )}
 
         {/* THEME TOGGLE */}

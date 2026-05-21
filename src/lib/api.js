@@ -101,6 +101,14 @@ export async function updateTimeControls(childId, data) {
   });
 }
 
+export async function setChildForceStop(childId, stopped) {
+  return request(`/api/children/${childId}/force-stop`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ stopped }),
+  });
+}
+
 /* =========================
    REPORTS
 ========================= */

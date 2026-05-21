@@ -44,6 +44,11 @@ model Child {
   lastSeenAt            DateTime?
   currentSubjectId      String?
 
+  // Parent-controlled force stop. When true, the game shows its blocked overlay
+  // and bypasses any local dev "force allow play" toggle.
+  forceStopped          Boolean  @default(false)
+  forceStoppedAt        DateTime?
+
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
