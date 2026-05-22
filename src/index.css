@@ -6,27 +6,24 @@
    THEME TOKENS
 ===================================================== */
 
-/* ---------- LIGHT MODE (EXPLICIT) ---------- */
+/* ---------- LIGHT — AURORA LIGHT (premium light theme) ----------
+   Mirror of the Special theme effects (animated bg, frosted glass,
+   iridescent stroke) but with a pastel daylight palette. */
 [data-theme="light"] {
-  /* Page background (gray, not white) */
-  --bg-base: 236 239 244;
+  --bg-base: 248 246 255;          /* near-white with a violet tint */
 
-  /* Panels / cards */
-  --panel: 246 248 251;
-  --panel2: 240 243 247;
+  --blob1: 255 170 200;             /* soft pink   */
+  --blob2: 170 220 240;             /* soft cyan   */
+  --blob3: 255 215 160;             /* soft peach  */
 
-  /* Text */
-  --text-main: 22 27 38;
-  --text-secondary: 70 77 91;
-  --text-muted: 130 137 150;
+  --panel: 255 255 255;
+  --panel2: 248 245 255;
 
-  /* Borders */
-  --border-soft: 215 220 228;
+  --text-main:      30 22 55;       /* dark slate-violet */
+  --text-secondary: 70 65 110;
+  --text-muted:    130 125 170;
 
-  /* Disable dark effects */
-  --blob1: 0 0 0;
-  --blob2: 0 0 0;
-  --blob3: 0 0 0;
+  --border-soft: 200 195 230;       /* subtle violet-tinted border */
 }
 
 /* ---------- DARK MODE ---------- */
@@ -118,11 +115,16 @@
   animation: bgShift 18s ease-in-out infinite;
 }
 
-/* Light mode flat background */
+/* Light — aurora gradient (same pattern as Special, pastel palette) */
 [data-theme="light"] .adapted-bg {
-  /* Use the light-mode base color for page background to avoid undefined vars */
-  background: rgb(var(--bg-base));
-  animation: none;
+  background:
+    radial-gradient(60% 60% at 15% 20%, rgba(var(--blob1), 0.50) 0%, transparent 60%),
+    radial-gradient(60% 60% at 85% 30%, rgba(var(--blob2), 0.45) 0%, transparent 60%),
+    radial-gradient(55% 55% at 50% 95%, rgba(var(--blob3), 0.40) 0%, transparent 60%),
+    linear-gradient(135deg, rgb(var(--bg-base)) 0%, rgb(235 230 255) 100%);
+  background-attachment: fixed;
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: bgShift 22s ease-in-out infinite;
 }
 
 /* Special — aurora gradient with three radial color washes layered over a deep violet base */
@@ -149,8 +151,13 @@
 }
 
 [data-theme="light"] .shape {
-  display: none !important;
+  opacity: 0.32;
+  filter: blur(70px);
+  mix-blend-mode: multiply;
 }
+[data-theme="light"] .shape.one   { top: -240px; left: -240px; }
+[data-theme="light"] .shape.two   { bottom: -300px; right: -300px; }
+[data-theme="light"] .shape.three { top: 45%; left: 75%; }
 
 .shape.one {
   width: 420px;
@@ -192,7 +199,8 @@
 }
 
 [data-theme="light"] .grain {
-  display: none !important;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
 }
 
 /* =====================================================
@@ -215,6 +223,18 @@
   box-shadow:
     0 20px 60px rgba(0,0,0,0.65),
     inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+/* Light — light frosted glass (same blur as Special, white instead of violet) */
+[data-theme="light"] .panel {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid rgba(120, 100, 180, 0.12);
+  box-shadow:
+    0 24px 70px rgba(60, 30, 120, 0.10),
+    0 0 24px rgba(220, 180, 255, 0.10),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.60);
 }
 
 /* Special — premium frosted glass */
@@ -274,9 +294,29 @@
   opacity: 0.45;
 }
 
-/* No stroke in light mode */
+/* Light — iridescent stroke in the pastel palette */
 [data-theme="light"] .stroke::after {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    115deg,
+    rgba(var(--blob1), 0.65),
+    rgba(var(--blob2), 0.65),
+    rgba(var(--blob3), 0.65)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 /* Special — brighter iridescent stroke (uses the special-mode blob colors automatically) */
@@ -356,6 +396,7 @@ button, a, input, select, textarea, [role="button"], .panel a, .panel button {
 /* Disable the animated bg gradient shift on mobile — bgShift on a 200%
    background is constantly re-painting the page bg even when idle. */
 @media (max-width: 1023px) {
+  [data-theme="light"] .adapted-bg,
   [data-theme="dark"] .adapted-bg,
   [data-theme="special"] .adapted-bg {
     animation: none;
@@ -367,11 +408,13 @@ button, a, input, select, textarea, [role="button"], .panel a, .panel button {
    re-blurs every frame, esp. with content scrolling underneath).
    Drop blur + bump opacity so panels still read as cards. */
 @media (max-width: 767px) {
+  [data-theme="light"] .panel,
   [data-theme="dark"] .panel,
   [data-theme="special"] .panel {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+  [data-theme="light"] .panel   { background: rgba(255, 255, 255, 0.92); }
   [data-theme="dark"] .panel    { background: rgba(15, 20, 35, 0.92); }
   [data-theme="special"] .panel { background: rgba(22, 14, 44, 0.92); }
 
@@ -382,7 +425,9 @@ button, a, input, select, textarea, [role="button"], .panel a, .panel button {
   /* The .stroke iridescent border re-renders a masked gradient on every
      frame; on mobile we trade it for a flat 1px border. */
   .stroke::after { display: none !important; }
-  .panel.stroke  { border: 1px solid rgba(255, 255, 255, 0.08); }
+  [data-theme="light"]   .panel.stroke { border: 1px solid rgba(120, 100, 180, 0.18); }
+  [data-theme="dark"]    .panel.stroke,
+  [data-theme="special"] .panel.stroke { border: 1px solid rgba(255, 255, 255, 0.08); }
 }
 
 /* =====================================================
