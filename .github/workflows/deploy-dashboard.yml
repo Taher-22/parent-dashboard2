@@ -33,23 +33,66 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy dist/ via FTP
+      # ───────────────────────────────────────────────────────────────────
+      # Hostinger's FTP control socket sporadically drops mid-upload with a
+      # "Timeout (control socket)" error. Build is always fine, only the
+      # upload step fails. We retry up to 3 times with backoff before
+      # actually failing the workflow.
+      # ───────────────────────────────────────────────────────────────────
+      - name: Deploy dist/ via FTP (attempt 1)
+        id: ftp1
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Local folder to upload from. Note the trailing slash — required by the action.
           local-dir: ./dist/
-          # Remote folder on the server (e.g. /public_html/ or /public_html/neuroquest/).
           server-dir: ${{ secrets.FTP_TARGET_DIR }}
-          # Incremental: only files whose size/hash changed are uploaded after the first run.
-          # First run uploads everything.
           state-name: .ftp-deploy-sync-state.json
-          # Don't delete anything outside the dist tree (e.g. .htaccess, custom files).
-          # Set to true once you're confident, to also remove stale assets.
           dangerous-clean-slate: false
-          # Files in dist/ to skip (none for now).
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+
+      - name: Wait 20s before retry
+        if: steps.ftp1.outcome == 'failure'
+        run: sleep 20
+
+      - name: Deploy dist/ via FTP (attempt 2)
+        if: steps.ftp1.outcome == 'failure'
+        id: ftp2
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          state-name: .ftp-deploy-sync-state.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+
+      - name: Wait 45s before final retry
+        if: steps.ftp1.outcome == 'failure' && steps.ftp2.outcome == 'failure'
+        run: sleep 45
+
+      - name: Deploy dist/ via FTP (attempt 3 — final)
+        if: steps.ftp1.outcome == 'failure' && steps.ftp2.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.FTP_TARGET_DIR }}
+          state-name: .ftp-deploy-sync-state.json
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
