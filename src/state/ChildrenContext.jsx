@@ -136,8 +136,8 @@ setActiveChildIdState((prev) => {
     return () => window.removeEventListener("token-changed", handleStorageChange);
   }, []);
 
-  // TEMPORARY: 1s poll for fast end-to-end testing.
-  // Revert to 20000 (or higher) before shipping — 1s is wasteful and noisy.
+  // Poll children every 15s so presence (lastSeenAt) stays fresh in the UI.
+  // 15s comfortably refreshes inside the 60s "online" staleness window.
   useEffect(() => {
     if (!me?.id) return;
     const id = setInterval(async () => {
@@ -146,7 +146,7 @@ setActiveChildIdState((prev) => {
         const list = await getMyChildren();
         if (Array.isArray(list)) setKids(list);
       } catch { /* silent — auth errors handled elsewhere */ }
-    }, 1000);
+    }, 15000);
     return () => clearInterval(id);
   }, [me?.id]);
 

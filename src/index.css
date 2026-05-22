@@ -344,6 +344,26 @@
 }
 
 /* =====================================================
+   MOBILE PERF: backdrop-filter blur is expensive on
+   phones (each filtered panel re-blurs every frame).
+   On <md screens we drop the blur and bump the panel
+   opacity so it still reads as a card.
+===================================================== */
+@media (max-width: 767px) {
+  [data-theme="dark"] .panel,
+  [data-theme="special"] .panel {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  [data-theme="dark"] .panel    { background: rgba(15, 20, 35, 0.92); }
+  [data-theme="special"] .panel { background: rgba(22, 14, 44, 0.92); }
+
+  /* The aurora shapes also hammer the compositor on phones — hide them. */
+  .shape { display: none; }
+  .grain { display: none; }
+}
+
+/* =====================================================
    REDUCED MOTION
 ===================================================== */
 @media (prefers-reduced-motion: reduce) {
