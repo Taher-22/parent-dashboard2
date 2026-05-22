@@ -17,6 +17,18 @@ export function ThemeProvider({ children }) {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  // On phones we don't expose Dark mode — only Light + Special. If the
+  // saved theme is "dark" and we're on a phone-sized viewport, flip to
+  // Special on mount so the user lands in a theme that's actually toggle-able.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isPhone = window.matchMedia("(max-width: 767px)").matches;
+    if (isPhone && theme === "dark") {
+      setThemeState("special");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function setTheme(next) {
     if (THEMES.includes(next)) setThemeState(next);
   }

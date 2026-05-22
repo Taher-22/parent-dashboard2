@@ -313,6 +313,32 @@ export default function SpecialShell() {
             <span className="hidden lg:inline text-sm font-semibold">Logout</span>
           </button>
 
+          {/* Mobile quick theme toggle (Light ↔ Special only) */}
+          <div className="md:hidden flex items-center gap-0.5 rounded-xl border border-white/15 p-0.5 shrink-0">
+            <button
+              onClick={() => setTheme("light")}
+              aria-label="Light mode"
+              className={`p-1.5 rounded-lg transition-colors min-w-[36px] min-h-[36px] grid place-items-center ${
+                theme === "light"
+                  ? "bg-amber-300/25 text-amber-200"
+                  : "opacity-55"
+              }`}
+            >
+              <Sun className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setTheme("special")}
+              aria-label="Special mode"
+              className={`p-1.5 rounded-lg transition-colors min-w-[36px] min-h-[36px] grid place-items-center ${
+                theme === "special"
+                  ? "bg-gradient-to-r from-fuchsia-500/30 via-cyan-400/25 to-amber-400/30 text-fuchsia-100"
+                  : "opacity-55"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* Mobile settings gear (replaces hamburger) */}
           <button
             onClick={() => setSheetOpen(true)}
@@ -590,15 +616,15 @@ export default function SpecialShell() {
                   </div>
                 )}
 
-                {/* Theme switch — inline label + buttons */}
+                {/* Theme switch — Light + Special only on mobile (Dark not exposed). */}
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">Theme</span>
                   <div className="flex-1 flex items-center gap-1 rounded-xl border border-white/10 p-1">
-                    {THEMES.map(({ id, icon: Icon }) => (
+                    {THEMES.filter((t) => t.id !== "dark").map(({ id, icon: Icon }) => (
                       <button
                         key={id}
                         onClick={() => setTheme(id)}
-                        className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold capitalize transition-colors ${
+                        className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold capitalize transition-colors ${
                           theme === id ? "bg-fuchsia-500/25 text-fuchsia-100" : "opacity-55"
                         }`}
                       >

@@ -186,7 +186,10 @@ export default function Topbar() {
                 onClick={() => setTheme(id)}
                 title={label}
                 aria-label={label}
-                className={`rounded-lg px-3 py-2 md:px-2.5 md:py-1.5 text-sm font-semibold flex items-center gap-1.5 transition-colors min-w-[44px] min-h-[40px] justify-center ${
+                className={`rounded-lg px-3 py-2 md:px-2.5 md:py-1.5 text-sm font-semibold items-center gap-1.5 transition-colors min-w-[44px] min-h-[40px] justify-center ${
+                  // Dark mode is hidden on phones — Light + Special only.
+                  id === "dark" ? "hidden md:flex" : "flex"
+                } ${
                   active
                     ? id === "special"
                       ? "bg-gradient-to-r from-fuchsia-500/25 via-cyan-400/20 to-amber-400/25 text-fuchsia-100 border border-fuchsia-400/30"
