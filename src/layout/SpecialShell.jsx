@@ -329,10 +329,10 @@ export default function SpecialShell() {
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 28, filter: "blur(10px)", scale: 0.98 }}
-            animate={{ opacity: 1, y: 0,  filter: "blur(0px)",  scale: 1    }}
-            exit   ={{ opacity: 0, y: -18, filter: "blur(8px)" }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit   ={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="panel stroke rounded-2xl p-4 md:p-6"
           >
             <Routes location={location}>

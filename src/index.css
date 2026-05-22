@@ -344,11 +344,28 @@
 }
 
 /* =====================================================
-   MOBILE PERF: backdrop-filter blur is expensive on
-   phones (each filtered panel re-blurs every frame).
-   On <md screens we drop the blur and bump the panel
-   opacity so it still reads as a card.
+   MOBILE PERF
 ===================================================== */
+
+/* Instant tap response on all interactive elements (no 300ms delay,
+   no scroll-after-tap glitches). */
+button, a, input, select, textarea, [role="button"], .panel a, .panel button {
+  touch-action: manipulation;
+}
+
+/* Disable the animated bg gradient shift on mobile — bgShift on a 200%
+   background is constantly re-painting the page bg even when idle. */
+@media (max-width: 1023px) {
+  [data-theme="dark"] .adapted-bg,
+  [data-theme="special"] .adapted-bg {
+    animation: none;
+    background-size: 100% 100%;
+  }
+}
+
+/* backdrop-filter blur is expensive on phones (each filtered panel
+   re-blurs every frame, esp. with content scrolling underneath).
+   Drop blur + bump opacity so panels still read as cards. */
 @media (max-width: 767px) {
   [data-theme="dark"] .panel,
   [data-theme="special"] .panel {
@@ -358,9 +375,14 @@
   [data-theme="dark"] .panel    { background: rgba(15, 20, 35, 0.92); }
   [data-theme="special"] .panel { background: rgba(22, 14, 44, 0.92); }
 
-  /* The aurora shapes also hammer the compositor on phones — hide them. */
+  /* Aurora shapes + grain hammer the compositor even when idle. */
   .shape { display: none; }
   .grain { display: none; }
+
+  /* The .stroke iridescent border re-renders a masked gradient on every
+     frame; on mobile we trade it for a flat 1px border. */
+  .stroke::after { display: none !important; }
+  .panel.stroke  { border: 1px solid rgba(255, 255, 255, 0.08); }
 }
 
 /* =====================================================
