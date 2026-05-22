@@ -39,7 +39,7 @@ const navGroups = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }) {
   const { createChild } = useChildren();
   const [showAddChild, setShowAddChild]     = useState(false);
   const [childName, setChildName]           = useState("");
@@ -98,7 +98,7 @@ export default function Sidebar() {
               {group.items.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <NavLink key={item.path} to={item.path} end>
+                  <NavLink key={item.path} to={item.path} end onClick={onNavigate}>
                     {({ isActive }) => (
                       <motion.div
                         whileHover={{ x: 4 }}

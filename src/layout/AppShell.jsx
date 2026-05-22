@@ -76,7 +76,11 @@ export default function AppShell() {
           <div className="flex flex-col gap-3 md:gap-6 min-w-0">
             {/* Sticky on every breakpoint so the hamburger stays in reach when scrolling. */}
             <header className="sticky top-3 md:top-6 z-30 flex items-center gap-2">
-              {/* Mobile hamburger */}
+              <div className="flex-1 min-w-0">
+                <Topbar />
+              </div>
+
+              {/* Mobile hamburger — RHS, inside the top bar row */}
               <button
                 onClick={() => setMobileNavOpen(true)}
                 className="lg:hidden panel stroke rounded-2xl p-3 shrink-0"
@@ -84,10 +88,6 @@ export default function AppShell() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-
-              <div className="flex-1 min-w-0">
-                <Topbar />
-              </div>
             </header>
 
             <main className="panel stroke rounded-2xl p-3 md:p-6 overflow-x-auto">
@@ -117,7 +117,7 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* MOBILE SIDEBAR DRAWER */}
+      {/* MOBILE SIDEBAR DRAWER — slides in from the RIGHT */}
       <AnimatePresence>
         {mobileNavOpen && (
           <>
@@ -125,28 +125,29 @@ export default function AppShell() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => setMobileNavOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
             />
             <motion.aside
-              initial={{ x: "-100%" }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-72 z-50 p-3 lg:hidden overflow-y-auto"
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed right-0 top-0 bottom-0 w-72 z-50 p-3 lg:hidden overflow-y-auto"
               onClick={() => setMobileNavOpen(false)}
             >
               <div onClick={(e) => e.stopPropagation()} className="h-full">
                 <div className="flex justify-end mb-2">
                   <button
                     onClick={() => setMobileNavOpen(false)}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
                     aria-label="Close menu"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                <Sidebar />
+                <Sidebar onNavigate={() => setMobileNavOpen(false)} />
               </div>
             </motion.aside>
           </>
