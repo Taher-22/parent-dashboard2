@@ -489,12 +489,15 @@ export default function SpecialShell() {
               onClick={() => setSheetOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
             />
+            {/* Flex-centered wrapper. pointer-events-none so backdrop clicks
+                still reach the dim layer; the modal itself re-enables them. */}
+            <div className="fixed inset-0 z-50 md:hidden flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, y: 16, scale: 0.97 }}
               animate={{ opacity: 1, y: 0,  scale: 1    }}
               exit   ={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 md:hidden panel stroke rounded-2xl w-[92vw] max-w-sm flex flex-col"
+              className="pointer-events-auto panel stroke rounded-2xl w-full max-w-sm flex flex-col"
               role="dialog"
               aria-modal="true"
             >
@@ -616,6 +619,7 @@ export default function SpecialShell() {
                 </button>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
