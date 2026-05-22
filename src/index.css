@@ -19,9 +19,10 @@
   --panel: 255 255 255;
   --panel2: 248 245 255;
 
-  --text-main:      30 22 55;       /* dark slate-violet */
-  --text-secondary: 70 65 110;
-  --text-muted:    130 125 170;
+  /* Higher-contrast inky text so it pops against the pastel aurora bg */
+  --text-main:      14 10 32;       /* deep near-black with slight violet */
+  --text-secondary: 50 45 80;
+  --text-muted:    100 95 135;
 
   --border-soft: 200 195 230;       /* subtle violet-tinted border */
 }
@@ -58,9 +59,10 @@
   --panel: 24 16 46;
   --panel2: 32 22 58;
 
-  --text-main: 240 232 255;
-  --text-secondary: 200 192 230;
-  --text-muted: 150 138 180;
+  /* Brighter, cleaner whites for higher contrast against the deep violet panels */
+  --text-main:      252 250 255;
+  --text-secondary: 222 218 245;
+  --text-muted:     170 162 200;
 
   --border-soft: 255 255 255;
 }
