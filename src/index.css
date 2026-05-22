@@ -19,10 +19,11 @@
   --panel: 255 255 255;
   --panel2: 248 245 255;
 
-  /* Higher-contrast inky text so it pops against the pastel aurora bg */
-  --text-main:      14 10 32;       /* deep near-black with slight violet */
-  --text-secondary: 50 45 80;
-  --text-muted:    100 95 135;
+  /* Maximum-contrast text — near-black across the board so labels,
+     subtitles and muted hints all stay legible on the pastel bg. */
+  --text-main:        4  2 14;       /* essentially black, hint of violet */
+  --text-secondary:  18 14 38;
+  --text-muted:      58 52 92;
 
   --border-soft: 200 195 230;       /* subtle violet-tinted border */
 }
@@ -384,6 +385,20 @@
   scrollbar-width: none;           /* Firefox */
   -ms-overflow-style: none;        /* IE / old Edge */
 }
+
+/* =====================================================
+   LIGHT-MODE LEGIBILITY
+   Tailwind opacity-50/55/60/65/70 utilities show up everywhere in the
+   layout for "muted" text (subtitles, section labels, inactive nav).
+   On a bright pastel bg they end up nearly invisible. Lift them here.
+===================================================== */
+[data-theme="light"] .opacity-40 { opacity: 0.62; }
+[data-theme="light"] .opacity-50 { opacity: 0.72; }
+[data-theme="light"] .opacity-55 { opacity: 0.78; }
+[data-theme="light"] .opacity-60 { opacity: 0.82; }
+[data-theme="light"] .opacity-65 { opacity: 0.85; }
+[data-theme="light"] .opacity-70 { opacity: 0.88; }
+[data-theme="light"] .opacity-75 { opacity: 0.92; }
 
 /* =====================================================
    MOBILE PERF
