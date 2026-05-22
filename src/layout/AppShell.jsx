@@ -47,8 +47,11 @@ export default function AppShell() {
     );
   }
 
-  /* ✨ SPECIAL theme → completely different layout */
-  if (theme === "special") {
+  /* ✨ SPECIAL + LIGHT both use the aurora SpecialShell layout (cog, top nav,
+     bottom tabs on mobile). They share every UI element — only the palette
+     differs (handled by [data-theme="..."] CSS). Dark stays on the classic
+     sidebar+topbar shell. */
+  if (theme === "special" || theme === "light") {
     return <SpecialShell />;
   }
 
