@@ -467,10 +467,9 @@ export default function SpecialShell() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl h-[88vh] flex flex-col"
+              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl flex flex-col"
             >
-              {/* Drag handle row — also functions as a tap-to-close target.
-                  Drag is restricted to this row so the body below scrolls normally. */}
+              {/* Drag handle — small touch zone, dismiss on quick swipe down */}
               <motion.div
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
@@ -478,12 +477,12 @@ export default function SpecialShell() {
                 onDragEnd={(_, info) => {
                   if (info.offset.y > 80 || info.velocity.y > 400) setSheetOpen(false);
                 }}
-                className="flex justify-center pt-3 pb-2 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+                className="flex justify-center pt-3 pb-1.5 shrink-0 cursor-grab active:cursor-grabbing touch-none"
               >
                 <div className="w-12 h-1.5 rounded-full bg-white/20" />
               </motion.div>
 
-              <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-white/5">
+              <div className="flex items-center justify-between px-4 pb-2 shrink-0">
                 <h3 className="font-extrabold text-lg tracking-tight">Settings</h3>
                 <button
                   onClick={() => setSheetOpen(false)}
@@ -493,104 +492,89 @@ export default function SpecialShell() {
                 </button>
               </div>
 
-              {/* Scrollable body */}
-              <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-8">
-              {/* Add Child */}
-              <button
-                onClick={openAddChild}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-colors mb-2"
-              >
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 grid place-items-center">
-                  <UserPlus className="h-4 w-4 text-emerald-300" />
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="font-semibold text-sm text-emerald-200">Add Child</div>
-                  <div className="text-[11px] opacity-55">Create a new game-access code</div>
-                </div>
-              </button>
+              {/* Dense body — 3-tile action row, inline theme, child switcher chips, logout. */}
+              <div className="px-4 pb-5 pt-1 space-y-3">
 
-              {/* Time control */}
-              <NavLink
-                to="/time-control"
-                onClick={() => setSheetOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors mb-2"
-              >
-                <div className="h-9 w-9 rounded-lg bg-amber-500/15 border border-amber-500/25 grid place-items-center">
-                  <Clock className="h-4 w-4 text-amber-300" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">Time Control</div>
-                  <div className="text-[11px] opacity-55">Daily limits, bedtime, breaks</div>
-                </div>
-              </NavLink>
+                {/* Action tiles (Add Child / Time / Download) */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={openAddChild}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-colors"
+                  >
+                    <UserPlus className="h-5 w-5 text-emerald-300" />
+                    <span className="text-[11px] font-bold text-emerald-200">Add Child</span>
+                  </button>
 
-              {/* Download */}
-              <a
-                href={GAME_DOWNLOAD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setSheetOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors mb-2"
-              >
-                <div className="h-9 w-9 rounded-lg bg-sky-500/15 border border-sky-500/25 grid place-items-center">
-                  <Download className="h-4 w-4 text-sky-300" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">Download Game</div>
-                  <div className="text-[11px] opacity-55">Latest Windows .exe</div>
-                </div>
-              </a>
+                  <NavLink
+                    to="/time-control"
+                    onClick={() => setSheetOpen(false)}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 transition-colors"
+                  >
+                    <Clock className="h-5 w-5 text-amber-300" />
+                    <span className="text-[11px] font-bold text-amber-200">Time</span>
+                  </NavLink>
 
-              {/* Child switcher (only when 2+ kids) */}
-              {kids.length > 1 && activeChild && (
-                <div className="px-3 py-3 rounded-xl bg-white/5 mb-2">
-                  <div className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Switch child</div>
-                  <div className="flex flex-col gap-1">
-                    {kids.map((k) => (
+                  <a
+                    href={GAME_DOWNLOAD_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setSheetOpen(false)}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 transition-colors"
+                  >
+                    <Download className="h-5 w-5 text-sky-300" />
+                    <span className="text-[11px] font-bold text-sky-200">Download</span>
+                  </a>
+                </div>
+
+                {/* Child switcher — horizontal chips, only when 2+ kids */}
+                {kids.length > 1 && activeChild && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">Child</span>
+                    <div className="flex-1 flex gap-1.5 overflow-x-auto">
+                      {kids.map((k) => (
+                        <button
+                          key={k.id}
+                          onClick={() => { setActiveChildId(k.id); setSheetOpen(false); }}
+                          className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                            k.id === activeChild.id
+                              ? "bg-fuchsia-500/20 border-fuchsia-400/40 text-fuchsia-100"
+                              : "border-white/15 opacity-70 hover:opacity-100"
+                          }`}
+                        >
+                          {k.displayName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Theme switch — inline label + buttons */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">Theme</span>
+                  <div className="flex-1 flex items-center gap-1 rounded-xl border border-white/10 p-1">
+                    {THEMES.map(({ id, icon: Icon }) => (
                       <button
-                        key={k.id}
-                        onClick={() => { setActiveChildId(k.id); setSheetOpen(false); }}
-                        className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-sm font-semibold ${
-                          k.id === activeChild.id
-                            ? "bg-fuchsia-500/15 text-fuchsia-100"
-                            : "opacity-70 hover:opacity-100 hover:bg-white/5"
+                        key={id}
+                        onClick={() => setTheme(id)}
+                        className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold capitalize transition-colors ${
+                          theme === id ? "bg-fuchsia-500/25 text-fuchsia-100" : "opacity-55"
                         }`}
                       >
-                        <span className="truncate">{k.displayName}</span>
-                        {k.id === activeChild.id && <Check className="h-3.5 w-3.5" />}
+                        <Icon className="h-3.5 w-3.5" />
+                        {id}
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
 
-              {/* Theme switch */}
-              <div className="px-3 py-3 rounded-xl bg-white/5 mb-2">
-                <div className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Theme</div>
-                <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1">
-                  {THEMES.map(({ id, icon: Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setTheme(id)}
-                      className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold capitalize transition-colors ${
-                        theme === id ? "bg-fuchsia-500/25 text-fuchsia-100" : "opacity-55"
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {id}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Logout */}
-              <button
-                onClick={() => { setSheetOpen(false); logout(navigate); }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-semibold text-sm transition-colors mt-1"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </button>
+                {/* Logout */}
+                <button
+                  onClick={() => { setSheetOpen(false); logout(navigate); }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-semibold text-sm transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </button>
               </div>
             </motion.div>
           </>
