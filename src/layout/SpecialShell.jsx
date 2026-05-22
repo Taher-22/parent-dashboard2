@@ -490,37 +490,27 @@ export default function SpecialShell() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
             />
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:hidden panel stroke rounded-t-3xl flex flex-col"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0,  scale: 1    }}
+              exit   ={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 md:hidden panel stroke rounded-2xl w-[92vw] max-w-sm flex flex-col"
+              role="dialog"
+              aria-modal="true"
             >
-              {/* Drag handle — small touch zone, dismiss on quick swipe down */}
-              <motion.div
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(_, info) => {
-                  if (info.offset.y > 80 || info.velocity.y > 400) setSheetOpen(false);
-                }}
-                className="flex justify-center pt-3 pb-1.5 shrink-0 cursor-grab active:cursor-grabbing touch-none"
-              >
-                <div className="w-12 h-1.5 rounded-full bg-white/20" />
-              </motion.div>
-
-              <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+              <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
                 <h3 className="font-extrabold text-lg tracking-tight">Settings</h3>
                 <button
                   onClick={() => setSheetOpen(false)}
-                  className="text-sm font-semibold text-fuchsia-300 hover:text-fuchsia-200"
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+                  aria-label="Close"
                 >
-                  Done
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* Dense body — 3-tile action row, inline theme, child switcher chips, logout. */}
-              <div className="px-4 pb-5 pt-1 space-y-3">
+              {/* Dense body — child code, 3-tile action row, inline theme, child switcher chips, logout. */}
+              <div className="px-4 pb-4 pt-1 space-y-3">
 
                 {/* Active child code — visible & tap-to-copy */}
                 {activeChild?.childCode && (
