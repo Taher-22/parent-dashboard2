@@ -94,6 +94,15 @@ export default function SpecialShell() {
     setTimeout(() => setCodeCopied(false), 1800);
   }
 
+  // Copy the active child's code from anywhere (sheet, dropdown).
+  const [childCodeCopied, setChildCodeCopied] = useState(false);
+  function copyActiveChildCode() {
+    if (!activeChild?.childCode) return;
+    navigator.clipboard.writeText(activeChild.childCode);
+    setChildCodeCopied(true);
+    setTimeout(() => setChildCodeCopied(false), 1800);
+  }
+
   const isStopped = pendingStop !== null ? pendingStop : !!activeChild?.forceStopped;
   async function toggleStop() {
     if (!activeChild) return;
@@ -225,8 +234,26 @@ export default function SpecialShell() {
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      className="absolute right-0 top-full mt-2 w-56 panel stroke rounded-xl p-2 z-50"
+                      className="absolute right-0 top-full mt-2 w-64 panel stroke rounded-xl p-2 z-50"
                     >
+                      {/* Active child code — tap to copy */}
+                      {activeChild?.childCode && (
+                        <button
+                          onClick={copyActiveChildCode}
+                          className="w-full flex items-center gap-2 px-2 py-2 mb-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 hover:bg-emerald-500/15 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="text-[9px] uppercase tracking-widest opacity-60 text-emerald-200">Code</div>
+                            <div className="font-mono font-black text-sm tracking-[0.22em] text-emerald-100 truncate">
+                              {activeChild.childCode}
+                            </div>
+                          </div>
+                          {childCodeCopied
+                            ? <Check className="h-3.5 w-3.5 text-emerald-300" />
+                            : <Copy  className="h-3.5 w-3.5 text-emerald-300/70" />}
+                        </button>
+                      )}
+
                       {kids.map((k) => (
                         <button
                           key={k.id}
@@ -494,6 +521,28 @@ export default function SpecialShell() {
 
               {/* Dense body — 3-tile action row, inline theme, child switcher chips, logout. */}
               <div className="px-4 pb-5 pt-1 space-y-3">
+
+                {/* Active child code — visible & tap-to-copy */}
+                {activeChild?.childCode && (
+                  <button
+                    onClick={copyActiveChildCode}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="text-[9px] uppercase tracking-widest opacity-60 text-emerald-200">
+                        Game access code · {activeChild.displayName}
+                      </div>
+                      <div className="font-mono font-black text-lg tracking-[0.28em] text-emerald-100 truncate">
+                        {activeChild.childCode}
+                      </div>
+                    </div>
+                    <div className="shrink-0 p-2 rounded-lg bg-emerald-500/15">
+                      {childCodeCopied
+                        ? <Check className="h-4 w-4 text-emerald-300" />
+                        : <Copy  className="h-4 w-4 text-emerald-300/80" />}
+                    </div>
+                  </button>
+                )}
 
                 {/* Action tiles (Add Child / Time / Download) */}
                 <div className="grid grid-cols-3 gap-2">
