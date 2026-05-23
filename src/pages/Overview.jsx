@@ -138,23 +138,38 @@ export default function Overview() {
       .finally(() => setAuthLoading(false));
   }, [navigate]);
 
-  // Load report + 7-day trend whenever the active child changes
+  // Load report + 7-day trend whenever the active child changes,
+  // then keep them fresh on a 15s poll while the page is visible so new
+  // progress / coins / scores show up without needing to navigate away.
   useEffect(() => {
     if (!activeChildId) {
       setReport(null);
       setTrend(null);
       return;
     }
-    setLoadingData(true);
-    Promise.all([
-      getChildReport(activeChildId).catch(() => null),
-      getTimeTrend(activeChildId).catch(() => null),
-    ])
-      .then(([r, t]) => {
+
+    let cancelled = false;
+    async function fetchOnce(showLoader) {
+      if (showLoader) setLoadingData(true);
+      try {
+        const [r, t] = await Promise.all([
+          getChildReport(activeChildId).catch(() => null),
+          getTimeTrend(activeChildId).catch(() => null),
+        ]);
+        if (cancelled) return;
         setReport(r);
         setTrend(t);
-      })
-      .finally(() => setLoadingData(false));
+      } finally {
+        if (!cancelled && showLoader) setLoadingData(false);
+      }
+    }
+
+    fetchOnce(true);
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      fetchOnce(false);
+    }, 15000);
+    return () => { cancelled = true; clearInterval(id); };
   }, [activeChildId]);
 
   // Derived KPIs
