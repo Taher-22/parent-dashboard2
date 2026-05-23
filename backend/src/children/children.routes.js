@@ -329,6 +329,23 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     select: { id: true, subjectId: true, question: true, userAnswer: true, correctAnswer: true, createdAt: true },
   });
 
+  // Recent score events (newest first, up to 20) + best score per subject.
+  const recentScores = await prisma.scoreRecord.findMany({
+    where: { childId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    include: { subject: { select: { id: true, name: true } } },
+  });
+  const bestScoresRaw = await prisma.scoreRecord.groupBy({
+    by: ["subjectId"],
+    where: { childId },
+    _max: { score: true },
+  });
+  const bestScoreBySubject = {};
+  for (const row of bestScoresRaw) {
+    if (row.subjectId) bestScoreBySubject[row.subjectId] = row._max.score ?? 0;
+  }
+
   // Calculate summary
   const totalSessions = await prisma.session.count({ where: { childId } });
   const totalPlayTimeSec = subjectProgress.reduce((sum, sp) => sum + sp.timeSpentSec, 0);
@@ -375,9 +392,19 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
         answersCorrect: a.correct,
         answersTotal: a.total,
         accuracyPct: a.total > 0 ? Math.round((a.correct / a.total) * 100) : null,
+        bestScore: bestScoreBySubject[sp.subjectId] ?? null,
       };
     }),
     recentWrongAnswers: recentWrong,
+    recentScores: recentScores.map((s) => ({
+      id: s.id,
+      subjectId: s.subjectId,
+      subjectName: s.subject?.name || null,
+      score: s.score,
+      maxScore: s.maxScore,
+      label: s.label,
+      createdAt: s.createdAt,
+    })),
     rewards: rewards.slice(0, 20), // Last 20 rewards
     timeControls,
     summary: {

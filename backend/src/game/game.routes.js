@@ -285,6 +285,40 @@ router.post("/child/:childId/answer", async (req, res) => {
 });
 
 /**
+ * POST /api/game/child/:childId/score
+ * Game posts a score event (e.g. finished a level / quiz).
+ * Body: { subjectId?, score, maxScore?, label? }
+ */
+router.post("/child/:childId/score", async (req, res) => {
+  const { childId } = req.params;
+  const { subjectId, score, maxScore, label } = req.body ?? {};
+
+  if (typeof score !== "number" || !Number.isFinite(score)) {
+    return res.status(400).json({ error: "score (number) is required" });
+  }
+
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child) return res.status(404).json({ error: "Child not found" });
+
+  if (subjectId) {
+    const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
+    if (!subject) return res.status(404).json({ error: "Subject not found" });
+  }
+
+  const record = await prisma.scoreRecord.create({
+    data: {
+      childId,
+      subjectId: subjectId || null,
+      score: Math.round(score),
+      maxScore: typeof maxScore === "number" && Number.isFinite(maxScore) ? Math.round(maxScore) : null,
+      label: label || null,
+    },
+  });
+
+  res.status(201).json(record);
+});
+
+/**
  * POST /api/game/child/:childId/heartbeat
  * Game pings every ~20s while a session is active. Body: { subjectId? }
  * Updates child.lastSeenAt = now + child.currentSubjectId.

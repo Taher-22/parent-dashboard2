@@ -58,6 +58,7 @@ model Child {
   messages      Message[]
   sessions      Session[]
   answers       AnswerRecord[]
+  scores        ScoreRecord[]
 
   createdAt     DateTime @default(now())
 }
@@ -71,6 +72,7 @@ model Subject {
   progress    SubjectProgress[]
   sessions    Session[]
   answers     AnswerRecord[]
+  scores      ScoreRecord[]
 }
 
 model SubjectProgress {
@@ -168,6 +170,25 @@ model AnswerRecord {
   isCorrect     Boolean
 
   createdAt     DateTime @default(now())
+
+  @@index([childId, createdAt])
+  @@index([childId, subjectId, createdAt])
+}
+
+model ScoreRecord {
+  id        String   @id @default(cuid())
+
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  score     Int
+  maxScore  Int?
+  label     String?   // free-text — e.g. "Level 3", "Speed quiz", "Final boss"
+
+  createdAt DateTime @default(now())
 
   @@index([childId, createdAt])
   @@index([childId, subjectId, createdAt])
