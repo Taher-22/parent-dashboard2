@@ -109,6 +109,15 @@ export async function setChildForceStop(childId, stopped) {
   });
 }
 
+/** body: { coins: absoluteValue } or { delta: relativeChange } */
+export async function setChildCoins(childId, body) {
+  return request(`/api/children/${childId}/coins`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+}
+
 /* =========================
    REPORTS
 ========================= */
@@ -127,6 +136,27 @@ export async function getSubjectReport(childId, subjectId) {
 
 export async function getTimeTrend(childId) {
   return request(`/api/children/${childId}/reports/time-trend`, {
+    headers: authHeaders(),
+  });
+}
+
+/* =========================
+   ANSWERS (right/wrong review)
+========================= */
+
+/**
+ * options: { limit, offset, isCorrect (bool), subjectId (str) }
+ * Returns { items, total, limit, offset, stats }
+ */
+export async function getChildAnswers(childId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.limit  != null) params.set("limit",  String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
+  if (options.isCorrect === true)  params.set("isCorrect", "true");
+  if (options.isCorrect === false) params.set("isCorrect", "false");
+  if (options.subjectId) params.set("subjectId", options.subjectId);
+  const qs = params.toString();
+  return request(`/api/children/${childId}/answers${qs ? `?${qs}` : ""}`, {
     headers: authHeaders(),
   });
 }

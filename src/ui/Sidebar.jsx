@@ -12,6 +12,7 @@ import {
   Copy,
   Check,
   Download,
+  ListChecks,
 } from "lucide-react";
 
 // Direct Google Drive download URL for the game .exe
@@ -27,6 +28,7 @@ const navGroups = [
       { label: "Overview",     path: "/overview",      icon: LayoutDashboard },
       { label: "Time Control", path: "/time-control",  icon: Clock           },
       { label: "Subjects",     path: "/subjects",      icon: Layers          },
+      { label: "Answers",      path: "/answers",       icon: ListChecks      },
       { label: "Reports",      path: "/reports",       icon: BarChart3       },
     ],
   },

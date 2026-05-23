@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMe, getChildReport, getTimeTrend } from "../lib/api";
+import { getMe, getChildReport, getTimeTrend, setChildCoins } from "../lib/api";
 
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
@@ -8,9 +8,90 @@ import AnimatedCounter from "../ui/AnimatedCounter.jsx";
 import Badge from "../ui/Badge.jsx";
 
 import { motion } from "framer-motion";
-import { Sparkles, Clock3, ListChecks } from "lucide-react";
+import { Sparkles, Clock3, ListChecks, Coins as CoinsIcon, Pencil, Check, X } from "lucide-react";
 
 import { useChildren } from "../state/ChildrenContext.jsx";
+
+function CoinsCard({ child, onUpdated }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(child?.coins ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setDraft(String(child?.coins ?? 0)); }, [child?.id, child?.coins]);
+
+  async function save() {
+    const n = Number(draft);
+    if (!Number.isFinite(n) || n < 0) {
+      setDraft(String(child.coins ?? 0));
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await setChildCoins(child.id, { coins: Math.round(n) });
+      onUpdated?.();
+      setEditing(false);
+    } catch {
+      alert("Couldn't update coins. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!child) return null;
+  return (
+    <Card title="Coins">
+      <div className="flex items-end gap-2">
+        {editing ? (
+          <>
+            <input
+              type="number"
+              min={0}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") save();
+                if (e.key === "Escape") { setDraft(String(child.coins ?? 0)); setEditing(false); }
+              }}
+              autoFocus
+              className="w-24 text-5xl font-black text-amber-400 bg-transparent border-b-2 border-amber-400/40 outline-none focus:border-amber-300"
+            />
+            <span className="pb-2 opacity-70">coins</span>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="ml-auto p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 disabled:opacity-50"
+              title="Save"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => { setDraft(String(child.coins ?? 0)); setEditing(false); }}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20"
+              title="Cancel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="text-5xl font-black text-amber-400">
+              <AnimatedCounter value={child.coins ?? 0} />
+            </span>
+            <span className="pb-2 opacity-70">coins</span>
+            <button
+              onClick={() => setEditing(true)}
+              className="ml-auto p-2 rounded-lg bg-white/10 hover:bg-white/20"
+              title="Edit coins"
+            >
+              <Pencil className="h-4 w-4 opacity-70" />
+            </button>
+          </>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 function formatTime(seconds) {
   if (!seconds) return "0 min";
@@ -35,7 +116,7 @@ function formatDateRelative(iso) {
 
 export default function Overview() {
   const navigate = useNavigate();
-  const { kids, activeChild, activeChildId, loadingKids } = useChildren();
+  const { kids, activeChild, activeChildId, loadingKids, reloadChildren } = useChildren();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [report,      setReport]      = useState(null);
@@ -153,7 +234,7 @@ export default function Overview() {
       </Card>
 
       {/* KPI ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <Card title="Today Focus Minutes">
           <div className="flex items-end gap-2">
             <span className="text-5xl font-black text-emerald-400">
@@ -189,6 +270,9 @@ export default function Overview() {
             <span className="pb-2 opacity-70">sessions</span>
           </div>
         </Card>
+
+        {/* Editable coin balance */}
+        <CoinsCard child={activeChild} onUpdated={reloadChildren} />
       </div>
 
       {/* SECOND ROW */}

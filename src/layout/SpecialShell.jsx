@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard, Clock, BarChart3, Bot, Layers, MessageSquare,
   Sun, Moon, Sparkles, OctagonX, Play, LogOut, Download, Settings,
-  ChevronDown, Check, Plus, X, Copy, UserPlus,
+  ChevronDown, Check, Plus, X, Copy, UserPlus, ListChecks,
 } from "lucide-react";
 
 import { useTheme } from "../state/ThemeContext.jsx";
@@ -19,20 +19,22 @@ import AIChat from "../pages/AIChat.jsx";
 import Subjects from "../pages/Subjects.jsx";
 import SubjectDetails from "../pages/SubjectDetails.jsx";
 import Messages from "../pages/Messages.jsx";
+import Answers from "../pages/Answers.jsx";
 import NotFound from "../pages/NotFound.jsx";
 
 const NAV = [
   { label: "Overview", path: "/overview",     icon: LayoutDashboard },
   { label: "Time",     path: "/time-control", icon: Clock           },
   { label: "Subjects", path: "/subjects",     icon: Layers          },
+  { label: "Answers",  path: "/answers",      icon: ListChecks      },
   { label: "Reports",  path: "/reports",      icon: BarChart3       },
   { label: "Messages", path: "/messages",     icon: MessageSquare   },
   { label: "AI",       path: "/ai",           icon: Bot             },
 ];
 
-// Mobile bottom tab bar — 5 primary destinations, no "More" button.
-// AI sits next to Messages. Time / Download / Theme / Logout live in the settings sheet.
-const MOBILE_TABS = ["/overview", "/subjects", "/reports", "/messages", "/ai"];
+// Mobile bottom tab bar — 5 primary destinations.
+// AI moved to the settings modal so Answers can take its place down here.
+const MOBILE_TABS = ["/overview", "/subjects", "/answers", "/reports", "/messages"];
 
 const GAME_DOWNLOAD_URL =
   "https://drive.google.com/uc?export=download&id=1-zN-VFrfzwfPAtmuXPRCWCol1VzS450s";
@@ -368,6 +370,7 @@ export default function SpecialShell() {
               <Route path="/subjects"             element={<Subjects />} />
               <Route path="/subjects/:subjectId"  element={<SubjectDetails />} />
               <Route path="/reports"              element={<Reports />} />
+              <Route path="/answers"              element={<Answers />} />
               <Route path="/messages"             element={<Messages />} />
               <Route path="/ai"                   element={<AIChat />} />
               <Route path="*"                     element={<NotFound />} />
@@ -563,8 +566,8 @@ export default function SpecialShell() {
                   </button>
                 )}
 
-                {/* Action tiles (Add Child / Time / Download) */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Action tiles (Add Child / Time / AI / Download) */}
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={openAddChild}
                     className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 transition-colors"
@@ -580,6 +583,15 @@ export default function SpecialShell() {
                   >
                     <Clock className="h-5 w-5 text-amber-300" />
                     <span className="text-[11px] font-bold text-amber-200">Time</span>
+                  </NavLink>
+
+                  <NavLink
+                    to="/ai"
+                    onClick={() => setSheetOpen(false)}
+                    className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-fuchsia-500/10 hover:bg-fuchsia-500/20 border border-fuchsia-500/25 transition-colors"
+                  >
+                    <Bot className="h-5 w-5 text-fuchsia-300" />
+                    <span className="text-[11px] font-bold text-fuchsia-200">AI</span>
                   </NavLink>
 
                   <a

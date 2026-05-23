@@ -18,6 +18,7 @@ import AIChat from "../pages/AIChat.jsx";
 import Subjects from "../pages/Subjects.jsx";
 import SubjectDetails from "../pages/SubjectDetails.jsx";
 import Messages from "../pages/Messages.jsx";
+import Answers from "../pages/Answers.jsx";
 import NotFound from "../pages/NotFound.jsx";
 
 export default function AppShell() {
@@ -109,6 +110,7 @@ export default function AppShell() {
                     <Route path="/subjects" element={<Subjects />} />
                     <Route path="/subjects/:subjectId" element={<SubjectDetails />} />
                     <Route path="/reports" element={<Reports />} />
+                    <Route path="/answers" element={<Answers />} />
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/ai" element={<AIChat />} />
                     <Route path="*" element={<NotFound />} />

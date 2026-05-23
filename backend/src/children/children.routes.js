@@ -392,6 +392,107 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
 });
 
 /**
+ * PUT /api/children/:childId/coins
+ * Parent edits a child's coin balance (absolute set OR delta adjustment).
+ *
+ * Body:
+ *   { coins: number }   → set the balance to this exact value (clamped >= 0)
+ * OR
+ *   { delta: number }   → add this amount (can be negative; result clamped >= 0)
+ */
+router.put("/:childId/coins", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const { coins, delta } = req.body ?? {};
+
+  if (typeof coins !== "number" && typeof delta !== "number") {
+    return res.status(400).json({ message: "Provide coins (absolute) or delta (relative)." });
+  }
+
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+  if (!child) return res.status(404).json({ message: "Child not found" });
+
+  const nextBalance = Math.max(
+    0,
+    Math.round(typeof coins === "number" ? coins : (child.coins || 0) + delta)
+  );
+
+  const updated = await prisma.child.update({
+    where: { id: childId },
+    data: { coins: nextBalance },
+    select: { id: true, coins: true },
+  });
+
+  res.json({ id: updated.id, coins: updated.coins });
+});
+
+/**
+ * GET /api/children/:childId/answers
+ * Paginated list of answer records for review (right/wrong with metadata).
+ *
+ * Query params:
+ *   limit      max items returned (default 50, max 200)
+ *   offset     pagination offset (default 0)
+ *   isCorrect  "true" | "false" → filter by correctness
+ *   subjectId  filter to a single subject
+ *
+ * Response: { items, total, limit, offset, stats }
+ */
+router.get("/:childId/answers", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+
+  // Ownership check
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+  if (!child) return res.status(404).json({ message: "Child not found" });
+
+  const limit  = Math.min(parseInt(req.query.limit)  || 50, 200);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
+  const where = { childId };
+  if (req.query.isCorrect === "true")  where.isCorrect = true;
+  if (req.query.isCorrect === "false") where.isCorrect = false;
+  if (req.query.subjectId) where.subjectId = req.query.subjectId;
+
+  const [items, filteredTotal, totalAnswers, correctAnswers] = await Promise.all([
+    prisma.answerRecord.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+      include: { subject: { select: { id: true, name: true } } },
+    }),
+    prisma.answerRecord.count({ where }),
+    prisma.answerRecord.count({ where: { childId } }),
+    prisma.answerRecord.count({ where: { childId, isCorrect: true } }),
+  ]);
+
+  res.json({
+    items: items.map((a) => ({
+      id: a.id,
+      subjectId: a.subjectId,
+      subjectName: a.subject?.name || null,
+      question: a.question,
+      userAnswer: a.userAnswer,
+      correctAnswer: a.correctAnswer,
+      isCorrect: a.isCorrect,
+      createdAt: a.createdAt,
+    })),
+    total: filteredTotal,
+    limit,
+    offset,
+    stats: {
+      totalAnswers,
+      correctAnswers,
+      wrongAnswers: totalAnswers - correctAnswers,
+      accuracyPct: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : null,
+    },
+  });
+});
+
+/**
  * GET /api/children/:childId/reports/time-trend
  * Get daily play time for the last 7 days
  * MUST be declared before /:childId/reports/:subjectId to avoid being shadowed
