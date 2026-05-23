@@ -285,6 +285,32 @@ router.post("/child/:childId/answer", async (req, res) => {
 });
 
 /**
+ * POST /api/game/child/:childId/coins
+ * Game-side coin adjustment. Always additive — body { delta: number },
+ * positive to add, negative to subtract. Result clamped >= 0.
+ */
+router.post("/child/:childId/coins", async (req, res) => {
+  const { childId } = req.params;
+  const { delta } = req.body ?? {};
+
+  if (typeof delta !== "number" || !Number.isFinite(delta)) {
+    return res.status(400).json({ error: "delta (number) is required" });
+  }
+
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child) return res.status(404).json({ error: "Child not found" });
+
+  const nextBalance = Math.max(0, Math.round((child.coins || 0) + delta));
+  const updated = await prisma.child.update({
+    where: { id: childId },
+    data: { coins: nextBalance },
+    select: { id: true, coins: true },
+  });
+
+  res.json(updated);
+});
+
+/**
  * POST /api/game/child/:childId/score
  * Game posts a score event (e.g. finished a level / quiz).
  * Body: { subjectId?, score, maxScore?, label? }
