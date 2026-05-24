@@ -32,9 +32,8 @@ const NAV = [
   { label: "AI",       path: "/ai",           icon: Bot             },
 ];
 
-// Mobile bottom tab bar — 5 primary destinations.
-// AI moved to the settings modal so Answers can take its place down here.
-const MOBILE_TABS = ["/overview", "/subjects", "/answers", "/reports", "/messages"];
+// Mobile bottom tab bar — primary destinations.
+const MOBILE_TABS = ["/overview", "/subjects", "/answers", "/reports", "/messages", "/ai"];
 
 const GAME_DOWNLOAD_URL =
   "https://drive.google.com/uc?export=download&id=1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-";
