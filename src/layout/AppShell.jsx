@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -8,6 +8,7 @@ import Topbar from "../ui/Topbar.jsx";
 import SpecialShell from "./SpecialShell.jsx";
 
 import { useTheme } from "../state/ThemeContext.jsx";
+import { trackPageview } from "../lib/analytics.js";
 
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
@@ -19,6 +20,7 @@ import Subjects from "../pages/Subjects.jsx";
 import SubjectDetails from "../pages/SubjectDetails.jsx";
 import Messages from "../pages/Messages.jsx";
 import Answers from "../pages/Answers.jsx";
+import AdminAnalytics from "../pages/AdminAnalytics.jsx";
 import NotFound from "../pages/NotFound.jsx";
 
 export default function AppShell() {
@@ -26,6 +28,12 @@ export default function AppShell() {
   const token = localStorage.getItem("token");
   const { theme } = useTheme();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Anonymous, privacy-respecting pageview tracking. Fires on every route
+  // change for logged-in and logged-out users alike. Honors DNT + opt-out.
+  useEffect(() => {
+    trackPageview(location.pathname, { isParent: !!token });
+  }, [location.pathname, token]);
 
   /* 🔒 NOT AUTHENTICATED */
   if (!token) {
@@ -113,6 +121,7 @@ export default function AppShell() {
                     <Route path="/answers" element={<Answers />} />
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/ai" element={<AIChat />} />
+                    <Route path="/admin/analytics" element={<AdminAnalytics />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </motion.div>

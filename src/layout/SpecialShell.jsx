@@ -20,6 +20,7 @@ import Subjects from "../pages/Subjects.jsx";
 import SubjectDetails from "../pages/SubjectDetails.jsx";
 import Messages from "../pages/Messages.jsx";
 import Answers from "../pages/Answers.jsx";
+import AdminAnalytics from "../pages/AdminAnalytics.jsx";
 import NotFound from "../pages/NotFound.jsx";
 
 const NAV = [
@@ -372,6 +373,7 @@ export default function SpecialShell() {
               <Route path="/answers"              element={<Answers />} />
               <Route path="/messages"             element={<Messages />} />
               <Route path="/ai"                   element={<AIChat />} />
+              <Route path="/admin/analytics"      element={<AdminAnalytics />} />
               <Route path="*"                     element={<NotFound />} />
             </Routes>
           </motion.div>

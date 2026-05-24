@@ -1,5 +1,9 @@
 [build]
 builder = "nixpacks"
+# Use `npm install` (not `npm ci`) so a package.json with new deps but stale
+# lockfile installs cleanly. Otherwise CI fails until the lockfile is in sync,
+# which we can't easily regenerate locally on this Windows dev box.
+buildCommand = "npm install && npx prisma generate"
 
 [deploy]
 startCommand = "npx prisma db push --accept-data-loss && node src/server.js"
