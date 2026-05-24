@@ -9,6 +9,7 @@ import Astronomy from "../three/subjects/Astronomy.jsx";
 import Math from "../three/subjects/Math.jsx";
 import Reading from "../three/subjects/Reading.jsx";
 import Science from "../three/subjects/Science.jsx";
+import Minigames from "../three/subjects/Minigames.jsx";
 
 /* ---------- DATA ---------- */
 const subjects = [
@@ -16,6 +17,7 @@ const subjects = [
   { id: "math",      nameKey: "subject_math",      component: <Math />      },
   { id: "reading",   nameKey: "subject_reading",   component: <Reading />   },
   { id: "science",   nameKey: "subject_science",   component: <Science />   },
+  { id: "minigames", nameKey: "subject_minigames", component: <Minigames /> },
 ];
 
 export default function Subjects() {
@@ -44,7 +46,7 @@ export default function Subjects() {
       </div>
 
       {/* SUBJECT GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-6">
         {subjects.map((s) => (
           <motion.div
             key={s.id}
