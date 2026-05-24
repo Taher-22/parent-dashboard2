@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Printer, AlertTriangle, Trophy, Clock, Star, TrendingUp, Target,
   BookOpen, Award, Activity, CheckCircle2, XCircle, Calendar, Sparkles,
-  ListChecks, TimerOff,
+  ListChecks, TimerOff, Sun, Moon,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell,
@@ -193,8 +193,21 @@ export default function Reports() {
   const strongest = masteryRank[0];
   const focusArea = masteryRank.length > 1 ? masteryRank[masteryRank.length - 1] : null;
 
-  function handlePrint() {
-    window.print();
+  const [printMode, setPrintMode] = useState("light"); // "light" | "dark"
+
+  // afterprint listener — always strip the print-dark hint once the
+  // browser is done so a stale class never leaks into screen styles.
+  useEffect(() => {
+    const onAfter = () => document.body.classList.remove("print-dark");
+    window.addEventListener("afterprint", onAfter);
+    return () => window.removeEventListener("afterprint", onAfter);
+  }, []);
+
+  function handlePrint(mode = printMode) {
+    if (mode === "dark") document.body.classList.add("print-dark");
+    else                 document.body.classList.remove("print-dark");
+    // give the class one frame to apply before the dialog opens
+    requestAnimationFrame(() => window.print());
   }
 
   return (
@@ -203,41 +216,68 @@ export default function Reports() {
       <style>{`
         @media print {
           @page { margin: 14mm 12mm; size: A4; }
-          html, body {
-            background: #fff !important;
-            color: #111 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
+
           /* Hide all chrome and unrelated content */
           .no-print, nav, aside, header,
           [data-print="hide"] { display: none !important; }
-          /* Strip layout wrappers and force content full width */
+          /* Visibility hack: hide everything, then re-show only the report */
           body * { visibility: hidden; }
           #report-printable, #report-printable * { visibility: visible; }
           #report-printable {
             position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0;
-            color: #111 !important; background: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          #report-printable .panel,
-          #report-printable .stroke {
+          #report-printable .print-break-before { break-before: page; page-break-before: always; }
+          #report-printable .print-avoid-break  { break-inside: avoid; page-break-inside: avoid; }
+
+          /* ── Default LIGHT print theme ──────────────────────────────── */
+          body:not(.print-dark), html:not(.print-dark) { background: #fff !important; color: #111 !important; }
+          body:not(.print-dark) #report-printable { color: #111 !important; background: #fff !important; }
+          body:not(.print-dark) #report-printable .panel,
+          body:not(.print-dark) #report-printable .stroke {
             background: #fff !important;
             border: 1px solid #d4d4d8 !important;
             box-shadow: none !important;
             color: #111 !important;
           }
-          #report-printable .print-break-before { break-before: page; page-break-before: always; }
-          #report-printable .print-avoid-break   { break-inside: avoid; page-break-inside: avoid; }
-          #report-printable .text-emerald-400,
-          #report-printable .text-emerald-500 { color: #047857 !important; }
-          #report-printable .text-yellow-400,
-          #report-printable .text-amber-400  { color: #b45309 !important; }
-          #report-printable .text-red-400,
-          #report-printable .text-rose-400   { color: #b91c1c !important; }
-          #report-printable .text-sky-400    { color: #075985 !important; }
-          #report-printable .text-purple-400 { color: #6b21a8 !important; }
-          /* Gradients flatten to solid */
-          #report-printable .bg-gradient-to-r { background-image: none !important; }
+          body:not(.print-dark) #report-printable .text-emerald-400,
+          body:not(.print-dark) #report-printable .text-emerald-500 { color: #047857 !important; }
+          body:not(.print-dark) #report-printable .text-yellow-400,
+          body:not(.print-dark) #report-printable .text-amber-400   { color: #b45309 !important; }
+          body:not(.print-dark) #report-printable .text-red-400,
+          body:not(.print-dark) #report-printable .text-rose-400    { color: #b91c1c !important; }
+          body:not(.print-dark) #report-printable .text-sky-400     { color: #075985 !important; }
+          body:not(.print-dark) #report-printable .text-purple-400  { color: #6b21a8 !important; }
+          body:not(.print-dark) #report-printable .bg-gradient-to-r { background-image: none !important; }
+
+          /* ── DARK print theme (opt-in via body.print-dark) ──────────── */
+          body.print-dark, html:has(body.print-dark) {
+            background: #0b1020 !important;
+            color: #e6e9f2 !important;
+          }
+          body.print-dark #report-printable { background: #0b1020 !important; color: #e6e9f2 !important; }
+          body.print-dark #report-printable .panel,
+          body.print-dark #report-printable .stroke {
+            background: rgba(255,255,255,0.04) !important;
+            border: 1px solid rgba(255,255,255,0.14) !important;
+            box-shadow: none !important;
+            color: #e6e9f2 !important;
+          }
+          body.print-dark #report-printable .text-main,
+          body.print-dark #report-printable .text-secondary { color: #e6e9f2 !important; }
+          body.print-dark #report-printable .text-muted     { color: #a8b0c2 !important; }
+          body.print-dark #report-printable .text-emerald-400,
+          body.print-dark #report-printable .text-emerald-500 { color: #34d399 !important; }
+          body.print-dark #report-printable .text-yellow-400,
+          body.print-dark #report-printable .text-amber-400   { color: #fbbf24 !important; }
+          body.print-dark #report-printable .text-red-400,
+          body.print-dark #report-printable .text-rose-400    { color: #f87171 !important; }
+          body.print-dark #report-printable .text-sky-400     { color: #38bdf8 !important; }
+          body.print-dark #report-printable .text-purple-400  { color: #c084fc !important; }
+          /* Keep status-tinted backgrounds visible in dark print */
+          body.print-dark #report-printable .bg-emerald-500\\/8,
+          body.print-dark #report-printable .bg-yellow-500\\/8 { background: rgba(255,255,255,0.06) !important; }
         }
       `}</style>
 
@@ -262,15 +302,42 @@ export default function Reports() {
               ))}
             </select>
           )}
+
+          {/* Light / Dark print mode toggle */}
+          <div className="inline-flex rounded-xl border border-white/15 bg-white/5 p-1 text-xs font-bold">
+            <button
+              onClick={() => setPrintMode("light")}
+              className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                printMode === "light"
+                  ? "bg-white/15 text-white"
+                  : "opacity-60 hover:opacity-90"
+              }`}
+              title="Print/save report on a white background"
+            >
+              <Sun className="h-3.5 w-3.5" /> Light
+            </button>
+            <button
+              onClick={() => setPrintMode("dark")}
+              className={`px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                printMode === "dark"
+                  ? "bg-white/15 text-white"
+                  : "opacity-60 hover:opacity-90"
+              }`}
+              title="Print/save report on a dark background"
+            >
+              <Moon className="h-3.5 w-3.5" /> Dark
+            </button>
+          </div>
+
           <button
-            onClick={handlePrint}
+            onClick={() => handlePrint()}
             disabled={!report}
             className="flex items-center gap-2 px-4 py-2 rounded-xl
                        border border-white/15 bg-white/8 hover:bg-white/15 disabled:opacity-40
                        font-semibold text-sm transition-colors"
           >
             <Printer className="h-4 w-4 opacity-80" />
-            Print / Save PDF
+            Save PDF
           </button>
         </div>
       </div>
