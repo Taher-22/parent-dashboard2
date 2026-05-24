@@ -808,55 +808,25 @@ function VisitsTab() {
       </div>
 
       <div className="panel stroke rounded-2xl p-5">
-        <div className="text-sm font-bold">Recent visits</div>
-        <div className="text-xs text-muted mt-0.5">Most recent 40 pageviews · logged-in visitors show their email</div>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-sm font-bold">Recent visits</div>
+            <div className="text-xs text-muted mt-0.5">
+              Email is highlighted when the visitor was logged in
+            </div>
+          </div>
+          <div className="text-[11px] opacity-60">{data?.recent?.length ?? 0} shown</div>
+        </div>
 
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm min-w-[920px]">
-            <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider opacity-50 border-b border-white/10">
-                <th className="py-2 pr-3">When</th>
-                <th className="py-2 pr-3">Visitor</th>
-                <th className="py-2 pr-3">Page</th>
-                <th className="py-2 pr-3">Where</th>
-                <th className="py-2 pr-3">Network</th>
-                <th className="py-2 pr-3">Device</th>
-                <th className="py-2 pr-3">Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data?.recent || []).map((r) => (
-                <tr key={r.id} className="border-b border-white/5 last:border-0 align-top">
-                  <td className="py-2 pr-3 whitespace-nowrap opacity-80">{fmtAgo(r.createdAt)}</td>
-                  <td className="py-2 pr-3 whitespace-nowrap">
-                    {r.parentEmail ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-bold">
-                        <Mail className="h-3 w-3 opacity-80" />
-                        {r.parentEmail}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] opacity-50 italic">anonymous</span>
-                    )}
-                  </td>
-                  <td className="py-2 pr-3 font-mono text-xs">{r.path}</td>
-                  <td className="py-2 pr-3 whitespace-nowrap">
-                    {r.country && <span className="mr-1">{flagEmoji(r.country)}</span>}
-                    {r.location}
-                  </td>
-                  <td className="py-2 pr-3 whitespace-nowrap opacity-70 text-xs max-w-[200px] truncate">{r.org || "—"}</td>
-                  <td className="py-2 pr-3 whitespace-nowrap opacity-80">
-                    {r.browser || "?"} · {r.os || "?"} · {r.device || "desktop"}
-                  </td>
-                  <td className="py-2 pr-3 whitespace-nowrap font-bold">{fmtMs(r.durationMs)}</td>
-                </tr>
-              ))}
-              {!data?.recent?.length && (
-                <tr><td className="py-4 opacity-55 text-sm" colSpan={7}>
-                  {loading ? "Loading…" : "No pageviews recorded yet."}
-                </td></tr>
-              )}
-            </tbody>
-          </table>
+        <div className="mt-4 space-y-2">
+          {(data?.recent || []).map((r) => (
+            <VisitCard key={r.id} r={r} />
+          ))}
+          {!data?.recent?.length && (
+            <div className="py-6 opacity-55 text-sm text-center">
+              {loading ? "Loading…" : "No pageviews recorded yet."}
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -895,6 +865,81 @@ function SearchBar({ placeholder, value, onChange, onSubmit, loading }) {
       >
         {loading ? "…" : "Search"}
       </button>
+    </div>
+  );
+}
+
+function VisitCard({ r }) {
+  const Icon = deviceIcon(r.device);
+
+  // Try to make the referrer readable — show the hostname or "(direct)"
+  let referrer = null;
+  if (r.referrer) {
+    try { referrer = new URL(r.referrer).hostname; } catch { referrer = r.referrer.slice(0, 60); }
+  }
+
+  return (
+    <div className={`rounded-xl border p-3 transition-colors ${
+      r.parentEmail
+        ? "border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/8"
+        : "border-white/10 bg-white/[0.03] hover:bg-white/5"
+    }`}>
+      {/* Top row — email + page + time */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {r.parentEmail ? (
+            <>
+              <Mail className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <span className="font-extrabold text-emerald-300 truncate">{r.parentEmail}</span>
+            </>
+          ) : (
+            <>
+              <User className="h-4 w-4 opacity-40 flex-shrink-0" />
+              <span className="text-sm opacity-50 italic">anonymous visitor</span>
+            </>
+          )}
+          <span className="opacity-30 text-xs">·</span>
+          <code className="text-xs font-mono opacity-80 truncate">{r.path}</code>
+        </div>
+
+        <div className="text-right text-xs whitespace-nowrap shrink-0">
+          <div className="font-bold opacity-90">{fmtAgo(r.createdAt)}</div>
+          <div className="opacity-50 text-[10px]">{new Date(r.createdAt).toLocaleString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</div>
+        </div>
+      </div>
+
+      {/* Detail row — location · device · time on page · referrer · session */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] opacity-75">
+        {r.location && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-3 w-3 opacity-60" />
+            {r.country && <span className="leading-none">{flagEmoji(r.country)}</span>}
+            <span>{r.location}</span>
+          </span>
+        )}
+        {r.org && (
+          <span className="inline-flex items-center gap-1 max-w-[200px] truncate opacity-70">
+            <Globe className="h-3 w-3 opacity-60" /> {r.org}
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1">
+          <Icon className="h-3 w-3 opacity-60" />
+          {r.browser || "?"} · {r.os || "?"}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <Clock className="h-3 w-3 opacity-60" />
+          {fmtMs(r.durationMs)} on page
+        </span>
+        {referrer && (
+          <span className="inline-flex items-center gap-1">
+            <ExternalLink className="h-3 w-3 opacity-60" />
+            via {referrer}
+          </span>
+        )}
+        {r.sessionId && (
+          <span className="font-mono opacity-50">sess {r.sessionId.slice(0, 8)}</span>
+        )}
+      </div>
     </div>
   );
 }

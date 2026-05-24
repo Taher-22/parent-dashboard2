@@ -266,7 +266,7 @@ router.get("/summary", requireAuth, async (req, res) => {
 
       prisma.pageView.findMany({
         orderBy: { createdAt: "desc" },
-        take:    40,
+        take:    60,
         select: {
           id: true, path: true, country: true, city: true, region: true,
           org: true, browser: true, os: true, device: true,
@@ -306,7 +306,7 @@ router.get("/summary", requireAuth, async (req, res) => {
       recent: recent.map((r) => ({
         id:           r.id,
         path:         r.path,
-        location:     [r.city, r.region, r.country].filter(Boolean).join(", ") || "—",
+        location:     [r.city, r.region, r.country].filter(Boolean).join(", ") || null,
         country:      r.country,
         org:          r.org,
         device:       r.device || "desktop",
