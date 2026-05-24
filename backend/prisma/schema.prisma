@@ -177,42 +177,6 @@ model AnswerRecord {
   @@index([childId, subjectId, createdAt])
 }
 
-/// Anonymous site analytics. No raw IP, no cookies, no PII.
-/// Each row is one page view; durationMs grows via /heartbeat.
-model PageView {
-  id         String   @id @default(cuid())
-
-  sessionId  String   @db.VarChar(64)    // anonymous UUID generated client-side in sessionStorage
-  path       String   @db.Text
-  referrer   String?  @db.Text
-
-  // Coarse IP-derived geo (never store the raw IP)
-  country    String?  @db.VarChar(8)
-  region     String?  @db.VarChar(64)
-  city       String?  @db.VarChar(96)
-
-  // Coarse client info — family-level only, no exact versions
-  browser    String?  @db.VarChar(32)
-  os         String?  @db.VarChar(32)
-  device     String?  @db.VarChar(16)    // "desktop" | "mobile" | "tablet"
-
-  // SHA-256(IP + server salt), truncated. One-way; used only for rough unique counts.
-  ipHash     String   @db.VarChar(64)
-
-  // True if a logged-in parent triggered this view
-  isParent   Boolean  @default(false)
-
-  // Time on page, updated by /heartbeat (clamped to a sane upper bound)
-  durationMs Int      @default(0)
-
-  createdAt  DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([sessionId])
-  @@index([country])
-  @@index([path])
-}
-
 model ScoreRecord {
   id        String   @id @default(cuid())
 

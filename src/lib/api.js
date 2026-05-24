@@ -199,14 +199,6 @@ export async function getMessages(childId) {
 }
 
 /* =========================
-   ADMIN ANALYTICS
-========================= */
-
-export async function getAnalyticsSummary() {
-  return request("/api/analytics/summary", { headers: authHeaders() });
-}
-
-/* =========================
    GAME INTEGRATION
 ========================= */
 
