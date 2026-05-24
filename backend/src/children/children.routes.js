@@ -326,7 +326,7 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     where: { childId, isCorrect: false },
     orderBy: { createdAt: "desc" },
     take: 20,
-    select: { id: true, subjectId: true, question: true, userAnswer: true, correctAnswer: true, createdAt: true },
+    select: { id: true, subjectId: true, question: true, options: true, userAnswer: true, correctAnswer: true, createdAt: true },
   });
 
   // Recent score events (newest first, up to 20) + best score per subject.
@@ -502,6 +502,7 @@ router.get("/:childId/answers", requireAuth, async (req, res) => {
       subjectId: a.subjectId,
       subjectName: a.subject?.name || null,
       question: a.question,
+      options: Array.isArray(a.options) ? a.options : null,
       userAnswer: a.userAnswer,
       correctAnswer: a.correctAnswer,
       isCorrect: a.isCorrect,

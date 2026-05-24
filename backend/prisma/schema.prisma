@@ -165,6 +165,7 @@ model AnswerRecord {
   subject       Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   question      String?   @db.Text
+  options       Json?     // The choices shown to the kid, as a JSON array of strings
   userAnswer    String?   @db.Text
   correctAnswer String?   @db.Text
   isCorrect     Boolean

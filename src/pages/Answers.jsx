@@ -241,38 +241,76 @@ function AnswerRow({ a, index }) {
     >
       <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${a.isCorrect ? "text-emerald-400" : "text-red-400"}`} />
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 space-y-2">
         {/* Top row: subject + time */}
-        <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center justify-between gap-2">
           <div className="text-[10px] uppercase tracking-widest opacity-60 truncate">
             {a.subjectName || a.subjectId || "—"}
           </div>
           <div className="text-[11px] opacity-55 shrink-0">{formatWhen(a.createdAt)}</div>
         </div>
 
-        {/* Question */}
+        {/* 1. Question text */}
         {a.question && (
           <div className="font-semibold text-sm md:text-base leading-snug">
             {a.question}
           </div>
         )}
 
-        {/* Answers */}
-        <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-3 text-xs md:text-sm">
-          {a.userAnswer != null && (
-            <div className="truncate">
-              <span className="opacity-55">Said: </span>
-              <span className={`font-mono font-bold ${a.isCorrect ? "text-emerald-300" : "text-red-300"}`}>
-                {a.userAnswer}
-              </span>
+        {/* 2. Answers (choices shown to the kid). Each is highlighted as:
+              · the correct one  → green outline
+              · what the kid picked → red if wrong, green if right
+              · everything else → muted */}
+        {Array.isArray(a.options) && a.options.length > 0 && (
+          <div>
+            <div className="text-[10px] uppercase tracking-widest opacity-55 mb-1">Choices</div>
+            <div className="flex flex-wrap gap-1.5">
+              {a.options.map((opt, i) => {
+                const isCorrectOpt = a.correctAnswer != null && String(opt) === String(a.correctAnswer);
+                const isUserOpt    = a.userAnswer    != null && String(opt) === String(a.userAnswer);
+                let cls = "border-white/15 opacity-65";
+                if (isCorrectOpt) {
+                  cls = "border-emerald-400/50 bg-emerald-500/15 text-emerald-200";
+                } else if (isUserOpt && !a.isCorrect) {
+                  cls = "border-red-400/50 bg-red-500/15 text-red-200 line-through";
+                }
+                return (
+                  <span
+                    key={i}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-mono ${cls}`}
+                  >
+                    {opt}
+                    {isCorrectOpt && <CheckCircle2 className="h-3 w-3" />}
+                    {isUserOpt && !a.isCorrect && <XCircle className="h-3 w-3" />}
+                  </span>
+                );
+              })}
             </div>
-          )}
-          {!a.isCorrect && a.correctAnswer != null && (
-            <div className="truncate">
-              <span className="opacity-55">Correct: </span>
-              <span className="font-mono font-bold text-emerald-300">{a.correctAnswer}</span>
-            </div>
-          )}
+          </div>
+        )}
+
+        {/* 3. What the player answered */}
+        {a.userAnswer != null && (
+          <div className="text-xs md:text-sm">
+            <span className="opacity-55">Player answered: </span>
+            <span className={`font-mono font-bold ${a.isCorrect ? "text-emerald-300" : "text-red-300"}`}>
+              {a.userAnswer}
+            </span>
+            {!a.isCorrect && a.correctAnswer != null && (
+              <>
+                <span className="opacity-55 ml-2">· Correct was </span>
+                <span className="font-mono font-bold text-emerald-300">{a.correctAnswer}</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* 4. Correct / wrong banner */}
+        <div className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest ${
+          a.isCorrect ? "text-emerald-300" : "text-red-300"
+        }`}>
+          <Icon className="h-3.5 w-3.5" />
+          {a.isCorrect ? "Correct" : "Wrong"}
         </div>
       </div>
     </motion.div>

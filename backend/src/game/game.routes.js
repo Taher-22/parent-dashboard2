@@ -252,11 +252,12 @@ router.patch("/messages/read", async (req, res) => {
 
 /**
  * POST /api/game/child/:childId/answer
- * Game posts one answer event. Body: { subjectId?, question?, userAnswer?, correctAnswer?, isCorrect }
+ * Game posts one answer event.
+ * Body: { subjectId?, question?, options?: string[], userAnswer?, correctAnswer?, isCorrect }
  */
 router.post("/child/:childId/answer", async (req, res) => {
   const { childId } = req.params;
-  const { subjectId, question, userAnswer, correctAnswer, isCorrect } = req.body ?? {};
+  const { subjectId, question, options, userAnswer, correctAnswer, isCorrect } = req.body ?? {};
 
   if (typeof isCorrect !== "boolean") {
     return res.status(400).json({ error: "isCorrect (boolean) is required" });
@@ -270,11 +271,22 @@ router.post("/child/:childId/answer", async (req, res) => {
     if (!subject) return res.status(404).json({ error: "Subject not found" });
   }
 
+  // Sanitize options into a string[] (or null when nothing useful was provided).
+  let optionsJson = null;
+  if (Array.isArray(options)) {
+    const clean = options
+      .filter((x) => x != null)
+      .map((x) => String(x))
+      .filter((x) => x.length > 0);
+    if (clean.length > 0) optionsJson = clean;
+  }
+
   const record = await prisma.answerRecord.create({
     data: {
       childId,
       subjectId: subjectId || null,
       question: question || null,
+      options: optionsJson,
       userAnswer: userAnswer || null,
       correctAnswer: correctAnswer || null,
       isCorrect,
