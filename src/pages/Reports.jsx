@@ -484,8 +484,8 @@ export default function Reports() {
             title="Copy the whole report as plain text (falls back to .txt download)"
           >
             {copied
-              ? <><Check className="h-4 w-4 text-emerald-400" /> Copied</>
-              : <><FileText className="h-4 w-4 opacity-80" /> Text report</>}
+              ? <><Check className="h-4 w-4 text-emerald-400" /> {t("txt_copied")}</>
+              : <><FileText className="h-4 w-4 opacity-80" /> {t("txt_report")}</>}
           </button>
 
           <button
@@ -594,9 +594,9 @@ export default function Reports() {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="text-sm font-bold text-main flex items-center gap-2">
                 <Bot className="h-4 w-4 opacity-70" />
-                AI Recommendation
+                {t("ai_recommendation")}
               </div>
-              {aiLoad && <span className="text-xs opacity-60">Generating…</span>}
+              {aiLoad && <span className="text-xs opacity-60">{t("ai_generating")}</span>}
             </div>
 
             {aiError && (
@@ -608,8 +608,8 @@ export default function Reports() {
                 {aiRec
                   ? aiRec
                   : aiLoad
-                    ? <span className="opacity-50 italic">Pulling insights from {child?.displayName ?? "the child"}'s recent activity…</span>
-                    : <span className="opacity-50 italic">No recommendation generated yet.</span>}
+                    ? <span className="opacity-50 italic">{t("ai_pulling_insights")} {child?.displayName ?? ""} {t("ai_pulling_insights_2")}</span>
+                    : <span className="opacity-50 italic">{t("ai_no_rec")}</span>}
               </div>
             )}
           </div>
@@ -622,7 +622,7 @@ export default function Reports() {
                   <Calendar className="h-4 w-4 opacity-70" />
                   {t("section_7day")}
                 </div>
-                <div className="text-xs text-muted mt-0.5">Daily play time across all subjects</div>
+                <div className="text-xs text-muted mt-0.5">{t("daily_play_subtitle")}</div>
               </div>
               <div className="text-xs opacity-60">
                 {trendData.length
@@ -796,7 +796,7 @@ export default function Reports() {
                       {" "}Keep encouraging — they have momentum here.
                     </p>
                   ) : (
-                    <p className="text-sm opacity-55 mt-1">Not enough data yet.</p>
+                    <p className="text-sm opacity-55 mt-1">{t("not_enough_data")}</p>
                   )}
                 </div>
 
@@ -822,7 +822,7 @@ export default function Reports() {
                 {/* Time / sessions guidance */}
                 {timeCtl && (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs opacity-80 leading-relaxed">
-                    <div className="font-bold opacity-100 text-sm mb-1">Your current limits</div>
+                    <div className="font-bold opacity-100 text-sm mb-1">{t("your_current_limits")}</div>
                     Daily {timeCtl.dailyMinutes ?? "—"} min · session {timeCtl.sessionMinutes ?? "—"} min · break {timeCtl.breakMinutes ?? "—"} min
                     {timeCtl.bedtimeBlock && <> · bedtime block {timeCtl.bedtimeBlock}{timeCtl.blockAfterBedtime ? "" : " (off)"}</>}.
                   </div>
@@ -837,10 +837,10 @@ export default function Reports() {
               <Activity className="h-4 w-4 opacity-70" />
               {t("section_recent")}
             </div>
-            <div className="text-xs text-muted">Last {Math.min(sessions.length, 10)} play sessions</div>
+            <div className="text-xs text-muted">{t("last_n_sessions")} {Math.min(sessions.length, 10)} {t("play_sessions")}</div>
 
             {sessions.length === 0 ? (
-              <p className="mt-4 text-sm opacity-55">No sessions recorded yet.</p>
+              <p className="mt-4 text-sm opacity-55">{t("no_sessions_yet")}</p>
             ) : (
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full text-sm">

@@ -3,6 +3,7 @@ import { Moon, Sun, Sparkles, UserRound, LogOut, Copy, Check, OctagonX, Play, Ba
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import useIsAdmin from "../state/useIsAdmin.jsx";
 import Badge from "./Badge.jsx";
 import { logout } from "../three/auth/auth";
@@ -24,6 +25,7 @@ const MAIN_MENU_ID = "seed_s_mainmenu";
 
 export default function Topbar() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLang();
   const navigate = useNavigate();
   const isAdmin = useIsAdmin();
 
@@ -51,7 +53,7 @@ export default function Topbar() {
       setTimeout(() => setPendingStop(null), 18000);
     } catch {
       setPendingStop(!next); // revert
-      alert("Couldn't update. Try again.");
+      alert(t("confirm_couldnt_update"));
     }
   }
 
@@ -81,7 +83,7 @@ export default function Topbar() {
               className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[color:var(--bg,#0c0d16)] ${
                 isOnline ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
               }`}
-              title={isOnline ? "In game" : "Offline"}
+              title={isOnline ? t("status_in_game") : t("status_offline")}
             />
           )}
         </div>
@@ -96,12 +98,12 @@ export default function Topbar() {
               {activeChild.displayName}
               {isOnline && activeChild.currentSubjectId === MAIN_MENU_ID && (
                 <span className="text-[10px] uppercase tracking-wider font-bold text-sky-400">
-                  In Main Menu
+                  {t("status_in_main_menu")}
                 </span>
               )}
               {isOnline && currentSubjectName && activeChild.currentSubjectId !== MAIN_MENU_ID && (
                 <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
-                  Playing {currentSubjectName}
+                  {t("status_playing")} {currentSubjectName}
                 </span>
               )}
               {isOnline && !currentSubjectName && (
@@ -149,10 +151,10 @@ export default function Topbar() {
       <div className="flex items-center gap-2 md:gap-3 flex-wrap justify-end">
         {activeChild && (
           isStopped
-            ? <Badge tone="red">Stopped</Badge>
+            ? <Badge tone="red">{t("status_stopped")}</Badge>
             : isOnline
-              ? <Badge tone="green">Online</Badge>
-              : <Badge tone="blue">Offline</Badge>
+              ? <Badge tone="green">{t("status_online")}</Badge>
+              : <Badge tone="blue">{t("status_offline")}</Badge>
         )}
 
         {/* PARENT FORCE-STOP per child */}
@@ -169,8 +171,8 @@ export default function Topbar() {
             }`}
           >
             {isStopped
-              ? <><Play className="h-4 w-4" /> <span className="hidden md:inline">Resume</span></>
-              : <><OctagonX className="h-4 w-4" /> <span className="hidden md:inline">Stop Play</span></>}
+              ? <><Play className="h-4 w-4" /> <span className="hidden md:inline">{t("btn_resume")}</span></>
+              : <><OctagonX className="h-4 w-4" /> <span className="hidden md:inline">{t("btn_stop_play")}</span></>}
           </button>
         )}
 
@@ -189,16 +191,16 @@ export default function Topbar() {
         {/* THEME SWITCH — Light / Special (Dark removed) */}
         <div className="rounded-xl border border-white/15 bg-black/5 dark:bg-white/5 p-0.5 flex items-center gap-0.5">
           {[
-            { id: "light",   label: "Light",   icon: Sun      },
-            { id: "special", label: "Special", icon: Sparkles },
-          ].map(({ id, label, icon: Icon }) => {
+            { id: "light",   labelKey: "theme_light_short",   icon: Sun      },
+            { id: "special", labelKey: "theme_special_short", icon: Sparkles },
+          ].map(({ id, labelKey, icon: Icon }) => {
             const active = theme === id;
             return (
               <button
                 key={id}
                 onClick={() => setTheme(id)}
-                title={label}
-                aria-label={label}
+                title={t(labelKey)}
+                aria-label={t(labelKey)}
                 className={`rounded-lg px-3 py-2 md:px-2.5 md:py-1.5 text-sm font-semibold flex items-center gap-1.5 transition-colors min-w-[44px] min-h-[40px] justify-center ${
                   active
                     ? id === "special"
@@ -208,7 +210,7 @@ export default function Topbar() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                <span className="hidden md:inline">{label}</span>
+                <span className="hidden md:inline">{t(labelKey)}</span>
               </button>
             );
           })}

@@ -580,4 +580,76 @@ router.get("/child/:childId", requireAuth, async (req, res) => {
   }
 });
 
+/* ─────────── GET /api/analytics/visits ───────────
+ * Admin search of pageviews by visitor email. Useful for "show me every
+ * page nasrrtm@gmail.com hit last week".
+ *
+ * Query:
+ *   ?email=...      partial match on parentEmail (case-insensitive)
+ *   ?limit=100      default 100, capped at 500
+ *   ?offset=0       paging
+ */
+router.get("/visits", requireAuth, async (req, res) => {
+  const me = await prisma.parent.findUnique({
+    where:  { id: req.user.id },
+    select: { email: true },
+  });
+  if (!isAdminUser({ email: me?.email })) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
+  const email  = (req.query.email || "").toString().trim();
+  const limit  = Math.min(parseInt(req.query.limit)  || 100, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
+  const where = email
+    ? { parentEmail: { contains: email } }
+    : {};
+
+  try {
+    const [items, total] = await Promise.all([
+      prisma.pageView.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take:    limit,
+        skip:    offset,
+        select: {
+          id: true, path: true, country: true, city: true, region: true,
+          org: true, browser: true, os: true, device: true,
+          durationMs: true, isParent: true, sessionId: true,
+          parentId: true, parentEmail: true,
+          createdAt: true, referrer: true,
+        },
+      }),
+      prisma.pageView.count({ where }),
+    ]);
+
+    res.json({
+      items: items.map((r) => ({
+        id:           r.id,
+        path:         r.path,
+        location:     [r.city, r.region, r.country].filter(Boolean).join(", ") || null,
+        country:      r.country,
+        org:          r.org,
+        device:       r.device || "desktop",
+        browser:      r.browser,
+        os:           r.os,
+        durationMs:   r.durationMs,
+        isParent:     r.isParent,
+        parentId:     r.parentId,
+        parentEmail:  r.parentEmail,
+        sessionId:    r.sessionId,
+        referrer:     r.referrer,
+        createdAt:    r.createdAt,
+      })),
+      total,
+      query: email,
+      limit, offset,
+    });
+  } catch (err) {
+    console.error("analytics visits error:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
 export default router;

@@ -33,6 +33,7 @@ import {
   getMe, getAnalyticsSummary,
   searchAnalyticsUsers, getAnalyticsUser,
   searchAnalyticsChildren, getAnalyticsChild,
+  searchAnalyticsVisits,
 } from "../lib/api.js";
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -104,6 +105,7 @@ export default function AdminAnalytics() {
       p.delete("user");
       p.delete("child");
       p.delete("q");
+      p.delete("email");
       return p;
     });
   }
@@ -835,57 +837,145 @@ function ChildDetail({ childId, onBack, onJumpToUser }) {
 /* ─── Visits tab (recent pageviews) ────────────────────── */
 
 function VisitsTab() {
-  // Reuse the shared summary cache so switching to Visits doesn't blank out.
-  const [data, setData]       = useState(() => summaryCache.data || readCachedSummary());
-  const [loading, setLoading] = useState(!data);
+  // URL-backed email filter so refresh + share-link preserves the search.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlEmail = searchParams.get("email") || "";
 
-  async function load() {
+  // Reuse the shared summary cache so switching to Visits doesn't blank out.
+  const [data,        setData]        = useState(() => summaryCache.data || readCachedSummary());
+  const [loading,     setLoading]     = useState(!data);
+  const [emailQuery,  setEmailQuery]  = useState(urlEmail);
+  const [filtered,    setFiltered]    = useState(null); // null = unfiltered (show data.recent)
+  const [filterLoad,  setFilterLoad]  = useState(false);
+
+  async function loadSummary() {
     setLoading((prev) => !data && prev);
     try {
       const fresh = await getAnalyticsSummary();
       setData(fresh);
       summaryCache.data = fresh;
       writeCachedSummary(fresh);
+    } catch {}
+    finally { setLoading(false); }
+  }
+
+  async function runEmailFilter(q) {
+    const trimmed = (q || "").trim();
+    if (!trimmed) {
+      setFiltered(null);
+      return;
+    }
+    setFilterLoad(true);
+    try {
+      const res = await searchAnalyticsVisits({ email: trimmed, limit: 200 });
+      setFiltered(res);
     } catch {
-      // keep prior data
+      setFiltered({ items: [], total: 0 });
     } finally {
-      setLoading(false);
+      setFilterLoad(false);
     }
   }
+
+  function submitEmail() {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("tab", "visits");
+      if (emailQuery) p.set("email", emailQuery); else p.delete("email");
+      return p;
+    });
+    runEmailFilter(emailQuery);
+  }
+
+  function clearFilter() {
+    setEmailQuery("");
+    setFiltered(null);
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.delete("email");
+      return p;
+    });
+  }
+
   useEffect(() => {
-    load();
-    const id = setInterval(load, 30_000);
+    loadSummary();
+    const id = setInterval(() => { if (!filtered) loadSummary(); }, 30_000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-run filter when URL param appears on mount (e.g. shared link)
+  useEffect(() => {
+    if (urlEmail) runEmailFilter(urlEmail);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const showing = filtered ? filtered.items : (data?.recent || []);
+  const totalLabel = filtered
+    ? `${filtered.total} total · ${filtered.items.length} shown`
+    : `${showing.length} shown`;
+
   return (
     <>
-      <div className="flex items-center justify-end -mt-1">
-        <button onClick={load}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/15 bg-white/8 hover:bg-white/15 text-sm font-semibold transition-colors">
-          <RefreshCw className={`h-4 w-4 opacity-80 ${loading ? "animate-spin" : ""}`} /> Refresh
+      {/* Search bar */}
+      <div className="panel stroke rounded-2xl p-3 flex items-center gap-2">
+        <Search className="h-4 w-4 opacity-60 ml-2" />
+        <input
+          value={emailQuery}
+          onChange={(e) => setEmailQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") submitEmail(); }}
+          placeholder="Search visits by email…"
+          className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-40"
+        />
+        {filtered && (
+          <button
+            onClick={clearFilter}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-bold opacity-65 hover:opacity-100"
+            title="Clear filter"
+          >
+            ✕
+          </button>
+        )}
+        <button
+          onClick={submitEmail}
+          disabled={filterLoad}
+          className="px-3 py-1.5 rounded-lg bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/30 text-fuchsia-200 text-xs font-bold disabled:opacity-40"
+        >
+          {filterLoad ? "…" : "Search"}
+        </button>
+        <button onClick={loadSummary}
+          className="px-2.5 py-1.5 rounded-lg border border-white/15 bg-white/8 hover:bg-white/15 text-xs font-semibold transition-colors"
+          title="Refresh"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 opacity-80 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
       <div className="panel stroke rounded-2xl p-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="text-sm font-bold">Recent visits</div>
+            <div className="text-sm font-bold">
+              {filtered ? `Visits matching "${filtered.query}"` : "Recent visits"}
+            </div>
             <div className="text-xs text-muted mt-0.5">
-              Email is highlighted when the visitor was logged in
+              {filtered
+                ? "Newest first — all pageviews from any matching email."
+                : "Email is highlighted when the visitor was logged in"}
             </div>
           </div>
-          <div className="text-[11px] opacity-60">{data?.recent?.length ?? 0} shown</div>
+          <div className="text-[11px] opacity-60">{totalLabel}</div>
         </div>
 
         <div className="mt-4 space-y-2">
-          {(data?.recent || []).map((r) => (
+          {showing.map((r) => (
             <VisitCard key={r.id} r={r} />
           ))}
-          {!data?.recent?.length && (
+          {showing.length === 0 && (
             <div className="py-6 opacity-55 text-sm text-center">
-              {loading ? "Loading…" : "No pageviews recorded yet."}
+              {(filterLoad || loading)
+                ? "Loading…"
+                : filtered
+                  ? "No matching visits."
+                  : "No pageviews recorded yet."}
             </div>
           )}
         </div>

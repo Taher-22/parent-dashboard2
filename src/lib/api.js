@@ -228,6 +228,14 @@ export async function getAnalyticsChild(childId) {
   return request(`/api/analytics/child/${childId}`, { headers: authHeaders() });
 }
 
+export async function searchAnalyticsVisits({ email = "", limit = 100, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  if (email) params.set("email", email);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  return request(`/api/analytics/visits?${params.toString()}`, { headers: authHeaders() });
+}
+
 /* =========================
    GAME INTEGRATION
 ========================= */

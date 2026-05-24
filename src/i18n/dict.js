@@ -276,6 +276,43 @@ export const STRINGS = {
     ar_answered_label:     "Player answered",
     ar_correct_label:      "Correct was",
     ar_no_answer:          "No answer given",
+
+    // Reports — AI recommendation + section helpers
+    ai_recommendation:     "AI Recommendation",
+    ai_generating:         "Generating…",
+    ai_pulling_insights:   "Pulling insights from",
+    ai_pulling_insights_2: "recent activity…",
+    ai_no_rec:             "No recommendation generated yet.",
+    ai_failed_short:       "Couldn't generate recommendation.",
+
+    txt_report:            "Text report",
+    txt_copied:            "Copied",
+
+    daily_play_subtitle:   "Daily play time across all subjects",
+    not_enough_data:       "Not enough data yet.",
+    your_current_limits:   "Your current limits",
+    no_sessions_yet:       "No sessions recorded yet.",
+    last_n_sessions:       "Last",   // followed by N "play sessions"
+    play_sessions:         "play sessions",
+    avg_session:           "Avg session",
+    hotspot_count:         "×",       // multiplier symbol used as is
+
+    // Stop/Resume control
+    btn_resume_play:       "Resume",
+    btn_force_stop:        "Stop Play",
+    badge_in_game:         "In game",
+    badge_stopped:         "Stopped",
+    confirm_couldnt_update: "Couldn't update. Try again.",
+
+    // Light / Special theme labels
+    theme_light_short:     "Light",
+    theme_special_short:   "Special",
+
+    // Analytics page (admin)
+    an_search_visits:      "Search visits by email…",
+    an_no_visits:          "No matching visits.",
+    an_filter_reset:       "Clear filter",
+    an_visits_filtered:    "Filtered to",
   },
 
   /* =========================
@@ -519,5 +556,38 @@ export const STRINGS = {
     ar_answered_label:     "إجابة الطفل",
     ar_correct_label:      "الإجابة الصحيحة",
     ar_no_answer:          "لم يجب",
+
+    ai_recommendation:     "توصيات الذكاء الاصطناعي",
+    ai_generating:         "جاري التحليل…",
+    ai_pulling_insights:   "جاري استخلاص الرؤى من نشاط",
+    ai_pulling_insights_2: "الأخير…",
+    ai_no_rec:             "لم يتم إنشاء توصية بعد.",
+    ai_failed_short:       "تعذّر إنشاء التوصية.",
+
+    txt_report:            "تقرير نصي",
+    txt_copied:            "تم النسخ",
+
+    daily_play_subtitle:   "وقت اللعب اليومي لجميع المواد",
+    not_enough_data:       "لا توجد بيانات كافية بعد.",
+    your_current_limits:   "حدودك الحالية",
+    no_sessions_yet:       "لم تُسجَّل أي جلسات بعد.",
+    last_n_sessions:       "آخر",
+    play_sessions:         "جلسات لعب",
+    avg_session:           "متوسط الجلسة",
+    hotspot_count:         "×",
+
+    btn_resume_play:       "استئناف",
+    btn_force_stop:        "إيقاف اللعب",
+    badge_in_game:         "داخل اللعبة",
+    badge_stopped:         "موقوف",
+    confirm_couldnt_update: "تعذّر التحديث. حاول مرة أخرى.",
+
+    theme_light_short:     "فاتح",
+    theme_special_short:   "مميز",
+
+    an_search_visits:      "ابحث في الزيارات حسب البريد…",
+    an_no_visits:          "لا توجد زيارات مطابقة.",
+    an_filter_reset:       "مسح التصفية",
+    an_visits_filtered:    "تصفية إلى",
   },
 };
