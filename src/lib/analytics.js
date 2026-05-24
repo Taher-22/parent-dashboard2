@@ -1,26 +1,30 @@
-// Frontend-only site analytics. Posts pageview events as rich embeds
-// directly to a Discord webhook — no backend changes required.
+// Privacy-respecting site analytics that posts to our own backend so the
+// data is queryable and historical. Replaces the previous Discord webhook.
 //
 // Privacy guardrails:
 //   - No cookies. Session id lives in sessionStorage (dies with the tab).
+//   - Geo lookup happens browser-side via ipapi.co — our server never sees
+//     the raw IP for the purpose of geo. (It does see it for hashing, but
+//     stores only a one-way truncated SHA-256.)
+//   - UA parsed to family-level only (Chrome/Safari/iOS — no exact versions).
 //   - Honors browser Do Not Track.
 //   - Honors a localStorage opt-out (`nq_no_track` = "1").
-//   - Geo comes from a public IP→country API (ipapi.co) called from
-//     the visitor's own browser — server never sees their IP.
-//   - User agent parsed to family-level only (Chrome / Safari / iOS).
-//   - Fire-and-forget. Network failures never reach the UI.
+//   - Fire-and-forget — every fetch is wrapped in try/catch.
 
-const WEBHOOK_URL =
-  "https://discord.com/api/webhooks/1507945441021657189/8AuvwGAtIwM81Gsw5Ns5ce6AzunLdwNkesktt0niJUo93bgePsUfhjuhZCEKnomgJSWf";
+const API_URL = "https://parent-dashboard2-production.up.railway.app";
 
 const SESSION_KEY = "nq_sid";
 const OPTOUT_KEY  = "nq_no_track";
+const HEARTBEAT_MS = 30_000;
+const MAX_TOTAL_MS = 30 * 60 * 1000; // stop heartbeating after 30 min idle
 
 let cachedGeo  = null;
 let geoFetched = false;
-let lastPath   = null;
-let lastStart  = 0;
 let sessionIdCache = null;
+let currentPageviewId = null;
+let pageStart  = 0;
+let lastPath   = null;
+let heartbeatTimer = null;
 
 /* ────────────────────────── opt-out & session ────────────────────────── */
 
@@ -35,16 +39,16 @@ function getSessionId() {
     sessionIdCache = sessionStorage.getItem(SESSION_KEY);
     if (!sessionIdCache) {
       const uuid = crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      sessionIdCache = uuid.slice(0, 12);
+      sessionIdCache = uuid.slice(0, 32);
       sessionStorage.setItem(SESSION_KEY, sessionIdCache);
     }
   } catch {
-    sessionIdCache = String(Date.now()).slice(-8);
+    sessionIdCache = `mem-${Date.now()}`;
   }
   return sessionIdCache;
 }
 
-/* ────────────────────────── geo lookup ──────────────────────────────── */
+/* ────────────────────────── geo & UA helpers ─────────────────────────── */
 
 async function fetchGeo() {
   if (geoFetched) return cachedGeo;
@@ -54,26 +58,24 @@ async function fetchGeo() {
     if (!r.ok) return null;
     const j = await r.json();
     cachedGeo = {
-      country: j.country_code || null,   // e.g. "GB"
-      city:    j.city          || null,
+      country: j.country_code || null,   // "GB", "US", etc.
       region:  j.region        || null,
-      org:     j.org           || null,  // ISP / network
+      city:    j.city          || null,
+      org:     j.org           || null,
     };
-    return cachedGeo;
-  } catch { return null; }
+  } catch { /* offline / blocked / rate-limited */ }
+  return cachedGeo;
 }
-
-/* ────────────────────────── UA parsing (light) ───────────────────────── */
 
 function parseUA() {
   const ua = typeof navigator !== "undefined" ? (navigator.userAgent || "") : "";
 
   let browser = "?";
-  if      (/Edg\//.test(ua))       browser = "Edge";
+  if      (/Edg\//.test(ua))         browser = "Edge";
   else if (/OPR\/|Opera\//.test(ua)) browser = "Opera";
-  else if (/Chrome\//.test(ua))    browser = "Chrome";
-  else if (/Firefox\//.test(ua))   browser = "Firefox";
-  else if (/Safari\//.test(ua))    browser = "Safari";
+  else if (/Chrome\//.test(ua))      browser = "Chrome";
+  else if (/Firefox\//.test(ua))     browser = "Firefox";
+  else if (/Safari\//.test(ua))      browser = "Safari";
 
   let os = "?";
   if      (/Windows NT/.test(ua))           os = "Windows";
@@ -90,144 +92,120 @@ function parseUA() {
   return { browser, os, device };
 }
 
-/* ────────────────────────── formatting helpers ───────────────────────── */
+/* ────────────────────────── heartbeat ────────────────────────────────── */
 
-function flagEmoji(code) {
-  if (!code || code.length !== 2) return "";
-  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
+function stopHeartbeat() {
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
 }
 
-function fmtMs(ms) {
-  if (!ms || ms < 1000) return "<1s";
-  const s = Math.round(ms / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  if (m < 60) return r ? `${m}m ${r}s` : `${m}m`;
-  return `${Math.floor(m / 60)}h ${m % 60}m`;
-}
-
-function locString(geo) {
-  if (!geo) return "—";
-  const flag  = flagEmoji(geo.country);
-  const place = [geo.city, geo.region].filter(Boolean).join(", ");
-  const tail  = [place, geo.country].filter(Boolean).join(" · ");
-  return [flag, tail].filter(Boolean).join(" ");
-}
-
-/* ────────────────────────── webhook delivery ─────────────────────────── */
-
-async function postEmbed(embed, useBeacon = false) {
-  const body = JSON.stringify({ embeds: [embed] });
-  if (useBeacon && typeof navigator !== "undefined" && navigator.sendBeacon) {
-    try {
-      const blob = new Blob([body], { type: "application/json" });
-      navigator.sendBeacon(WEBHOOK_URL, blob);
-      return;
-    } catch { /* fall through to fetch */ }
-  }
-  try {
-    await fetch(WEBHOOK_URL, {
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    if (!currentPageviewId) return;
+    const elapsed = Date.now() - pageStart;
+    if (elapsed > MAX_TOTAL_MS) { stopHeartbeat(); return; }
+    fetch(`${API_URL}/api/analytics/heartbeat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body,
+      body: JSON.stringify({ pageviewId: currentPageviewId, durationMs: elapsed }),
       keepalive: true,
+    }).catch(() => {});
+  }, HEARTBEAT_MS);
+}
+
+function attachUnloadBeacon() {
+  if (typeof window === "undefined" || window.__nqUnloadAttached) return;
+  window.__nqUnloadAttached = true;
+  const beacon = () => {
+    if (!currentPageviewId) return;
+    const body = JSON.stringify({
+      pageviewId: currentPageviewId,
+      durationMs: Date.now() - pageStart,
     });
-  } catch { /* silent */ }
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: "application/json" });
+      navigator.sendBeacon(`${API_URL}/api/analytics/heartbeat`, blob);
+    } else {
+      fetch(`${API_URL}/api/analytics/heartbeat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body, keepalive: true,
+      }).catch(() => {});
+    }
+  };
+  window.addEventListener("pagehide", beacon);
+  window.addEventListener("beforeunload", beacon);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") beacon();
+  });
 }
 
 /* ────────────────────────── public API ───────────────────────────────── */
 
 /**
- * Record one pageview. Posts an embed to the Discord webhook.
- * Includes the previous page + dwell time when present.
+ * Record one pageview. Safe to call on every route change.
+ * @param {string} path
+ * @param {object} [opts]
+ * @param {boolean} [opts.isParent]
  */
 export async function trackPageview(path, opts = {}) {
   if (isOptedOut()) return;
   if (typeof window === "undefined") return;
   if (!path) return;
-  if (path === lastPath) return; // dedupe identical fires (React StrictMode etc)
+  if (path === lastPath && currentPageviewId) return; // dedupe identical fires
+  lastPath = path;
 
-  const now = Date.now();
-  const previousPath     = lastPath;
-  const previousDuration = previousPath ? now - lastStart : null;
+  // Beacon out the previous page's final duration before starting a new view
+  if (currentPageviewId) {
+    const finalMs = Date.now() - pageStart;
+    fetch(`${API_URL}/api/analytics/heartbeat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageviewId: currentPageviewId, durationMs: finalMs }),
+      keepalive: true,
+    }).catch(() => {});
+  }
 
-  lastPath  = path;
-  lastStart = now;
+  pageStart = Date.now();
+  currentPageviewId = null;
 
-  const geo = await fetchGeo();
-  const ua  = parseUA();
-  const sid = getSessionId();
+  // Make sure we have geo + UA before sending (geo is cached after the first call)
+  const [geo] = await Promise.all([fetchGeo()]);
+  const ua = parseUA();
 
-  const fields = [
-    { name: "Page",     value: "`" + path + "`",                                              inline: false },
-    { name: "Location", value: locString(geo),                                                inline: true  },
-    { name: "Device",   value: `${ua.browser} · ${ua.os} · ${ua.device}`,                     inline: true  },
-    { name: "Session",  value: "`" + sid + "`",                                               inline: true  },
-  ];
-
-  if (previousPath) {
-    fields.push({
-      name:   "Came from",
-      value:  `\`${previousPath}\` (spent ${fmtMs(previousDuration)})`,
-      inline: false,
+  try {
+    const res = await fetch(`${API_URL}/api/analytics/pageview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: getSessionId(),
+        path,
+        referrer: document.referrer || null,
+        isParent: !!opts.isParent,
+        geo,
+        ua,
+      }),
     });
-  } else if (document.referrer) {
-    fields.push({ name: "Came from", value: document.referrer.slice(0, 200), inline: false });
+    if (!res.ok) return;
+    const data = await res.json().catch(() => ({}));
+    if (data?.id) {
+      currentPageviewId = data.id;
+      startHeartbeat();
+      attachUnloadBeacon();
+    }
+  } catch {
+    // Silent — analytics must never affect the UI
   }
-  if (geo?.org) {
-    fields.push({ name: "Network", value: geo.org.slice(0, 80), inline: false });
-  }
-  if (opts.isParent) {
-    fields.push({ name: "Identity", value: "🔑 logged-in parent", inline: true });
-  }
-
-  postEmbed({
-    title:     "👁️ Page view",
-    color:     opts.isParent ? 0x10b981 : 0x60a5fa, // green for parents, blue for guests
-    fields,
-    timestamp: new Date().toISOString(),
-    footer:    { text: "neuroquest.tech" },
-  });
-}
-
-/* On tab close: capture the current page's dwell time via sendBeacon. */
-if (typeof window !== "undefined" && !window.__nqUnloadAttached) {
-  window.__nqUnloadAttached = true;
-
-  const sendCloseBeacon = () => {
-    if (isOptedOut() || !lastPath) return;
-    const dwell = Date.now() - lastStart;
-    if (dwell < 1500) return; // ignore micro-views
-
-    postEmbed({
-      title: "🚪 Tab closed",
-      color: 0x94a3b8,
-      fields: [
-        { name: "Last page",  value: "`" + lastPath + "`",   inline: false },
-        { name: "Time spent", value: fmtMs(dwell),           inline: true  },
-        { name: "Location",   value: locString(cachedGeo),   inline: true  },
-        { name: "Session",    value: "`" + getSessionId() + "`", inline: true },
-      ],
-      timestamp: new Date().toISOString(),
-      footer:    { text: "neuroquest.tech" },
-    }, /* useBeacon */ true);
-  };
-
-  // pagehide fires on all close paths (tab close, navigate-away, mobile background)
-  window.addEventListener("pagehide", sendCloseBeacon);
-  // Fallback for the browsers that prefer beforeunload
-  window.addEventListener("beforeunload", sendCloseBeacon);
 }
 
 /* ────────────────────────── opt-out controls ─────────────────────────── */
 
 export function disableAnalytics() {
   try { localStorage.setItem(OPTOUT_KEY, "1"); } catch {}
+  stopHeartbeat();
+  currentPageviewId = null;
 }
 export function enableAnalytics() {
   try { localStorage.removeItem(OPTOUT_KEY); } catch {}
 }
-export function isAnalyticsEnabled() {
-  return !isOptedOut();
-}
+export function isAnalyticsEnabled() { return !isOptedOut(); }
