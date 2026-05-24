@@ -296,17 +296,21 @@ router.post("/child/:childId/answer", async (req, res) => {
     },
   });
 
-  // Mastery bump: every correct answer adds 1% to the SubjectProgress
-  // completion for this subject, capped at 100. Only fires when a subjectId
-  // was provided and the answer was correct (timed-out / wrong don't count).
+  // Mastery adjustment:
+  //  · correct answer  → +1% (cap 100)
+  //  · wrong answer    → -1% (floor 0)
+  //  · timed-out       → no change (running out of time isn't "got it wrong")
+  //  · no subjectId    → no change
   let masteryDelta = 0;
   let newCompletion = null;
-  if (isCorrect && subjectId) {
+  const shouldAdjustMastery = subjectId && (isCorrect || (!isCorrect && !tOut));
+  if (shouldAdjustMastery) {
     const existing = await prisma.subjectProgress.findUnique({
       where: { childId_subjectId: { childId, subjectId } },
     });
     const current = existing?.completion ?? 0;
-    newCompletion = Math.min(100, Math.round((current + 1) * 100) / 100);
+    const raw = current + (isCorrect ? 1 : -1);
+    newCompletion = Math.max(0, Math.min(100, Math.round(raw * 100) / 100));
     masteryDelta = Math.round((newCompletion - current) * 100) / 100;
 
     if (existing) {
@@ -318,6 +322,9 @@ router.post("/child/:childId/answer", async (req, res) => {
         },
       });
     } else {
+      // First time this child has any data for this subject — create the row.
+      // Note: for a brand-new subject the first wrong answer leaves completion at 0
+      // (floored), so we still create the row to record lastPlayedAt.
       await prisma.subjectProgress.create({
         data: {
           childId,
