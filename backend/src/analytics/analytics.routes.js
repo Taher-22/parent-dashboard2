@@ -44,24 +44,20 @@ function clientIp(req) {
   );
 }
 
-/**
- * Strict admin check: ONLY emails listed in the ADMIN_EMAILS env var
- * (comma-separated, case-insensitive) can view analytics. Everyone else
- * is denied — including the first-registered parent and including anyone
- * if ADMIN_EMAILS is empty.
- *
- * On Railway: set ADMIN_EMAILS to e.g. "nasrrtm@gmail.com,team@example.com".
- * If unset, NO ONE is admin (page returns 403 for everybody).
- */
+// Hardcoded owner allowlist. Always admin regardless of env vars.
+// Add more emails here if you want extra people to see analytics.
+const HARDCODED_ADMIN_EMAILS = ["nasrrtm@gmail.com"];
+
 function isAdminUser({ email }) {
   if (!email) return false;
+  const e = email.toLowerCase().trim();
+  if (HARDCODED_ADMIN_EMAILS.map((x) => x.toLowerCase()).includes(e)) return true;
+
+  // Optional env-var extension if you ever want to grant access without redeploying.
   const raw = (process.env.ADMIN_EMAILS || "").trim();
-  if (!raw) return false;                  // empty allowlist = nobody admin
-  const allow = raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  return allow.includes(email.toLowerCase());
+  if (!raw) return false;
+  const allow = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return allow.includes(e);
 }
 
 function clip(value, max) {

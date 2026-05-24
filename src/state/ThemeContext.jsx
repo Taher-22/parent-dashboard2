@@ -2,14 +2,16 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext(null);
 
-// Allowed theme IDs — keep in sync with the [data-theme="..."] blocks in index.css.
-const THEMES = ["light", "dark", "special"];
+// Allowed theme IDs — Dark mode was removed; only Light + Special remain.
+const THEMES = ["light", "special"];
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     const stored = localStorage.getItem("theme");
+    // Migrate any pre-removal "dark" preference to "special" (the closest match).
+    if (stored === "dark") return "special";
     if (stored && THEMES.includes(stored)) return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "special" : "light";
   });
 
   useEffect(() => {
@@ -17,19 +19,8 @@ export function ThemeProvider({ children }) {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // On phones we don't expose Dark mode — only Light + Special. If the
-  // saved theme is "dark" and we're on a phone-sized viewport, flip to
-  // Special on mount so the user lands in a theme that's actually toggle-able.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const isPhone = window.matchMedia("(max-width: 767px)").matches;
-    if (isPhone && theme === "dark") {
-      setThemeState("special");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function setTheme(next) {
+    if (next === "dark") next = "special"; // safety net for any leftover callers
     if (THEMES.includes(next)) setThemeState(next);
   }
 
@@ -38,7 +29,6 @@ export function ThemeProvider({ children }) {
   }
 
   // Backwards-compat for components that still consume isDark / toggleTheme.
-  // Treat 'special' as a dark variant so any existing dark/light styling stays sensible.
   const isDark = theme !== "light";
   const toggleTheme = cycleTheme;
 

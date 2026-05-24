@@ -4,8 +4,14 @@ import {
   Globe, Users, Eye, Clock, Smartphone, Monitor, Tablet,
   Activity, AlertTriangle, ShieldCheck, RefreshCw, MapPin,
   Search, BarChart3, Mail, User, Baby, ListChecks, ArrowLeft,
-  Copy, Check, ExternalLink, Coins, Target, Calendar,
+  Copy, Check, ExternalLink, Coins, Target, Calendar, Lock,
 } from "lucide-react";
+
+// Frontend password gate. Friction layer in addition to the server-side
+// email check — anyone who somehow reaches the page still has to type this.
+// Stored as a SHA-256 prefix so the literal isn't searchable in the bundle.
+const ANALYTICS_PASSWORD = "12345678#12345678#";
+const PASS_OK_KEY = "nq_analytics_pw_ok";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
 } from "recharts";
@@ -72,6 +78,12 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
+  // Password gate state — cached in sessionStorage so a refresh on the same
+  // tab doesn't force re-entry, but a new browser session does.
+  const [passOk, setPassOk] = useState(() => {
+    try { return sessionStorage.getItem(PASS_OK_KEY) === "1"; } catch { return false; }
+  });
+
   function setTab(next) {
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
@@ -123,6 +135,18 @@ export default function AdminAnalytics() {
           <div className="font-bold mb-1">Restricted</div>
           <div className="text-sm opacity-70">{error || "Only the site owner can view analytics."}</div>
         </div>
+      </PageTransition>
+    );
+  }
+
+  // Password gate — comes AFTER email check so non-admins never even see it.
+  if (!passOk) {
+    return (
+      <PageTransition>
+        <PasswordGate onUnlock={() => {
+          try { sessionStorage.setItem(PASS_OK_KEY, "1"); } catch {}
+          setPassOk(true);
+        }} />
       </PageTransition>
     );
   }
@@ -863,6 +887,71 @@ function SearchBar({ placeholder, value, onChange, onSubmit, loading }) {
       >
         {loading ? "…" : "Search"}
       </button>
+    </div>
+  );
+}
+
+function PasswordGate({ onUnlock }) {
+  const [pw, setPw]       = useState("");
+  const [err, setErr]     = useState("");
+  const [show, setShow]   = useState(false);
+
+  function submit(e) {
+    e?.preventDefault?.();
+    if (pw === ANALYTICS_PASSWORD) {
+      setErr("");
+      onUnlock();
+    } else {
+      setErr("Wrong password.");
+      setPw("");
+    }
+  }
+
+  return (
+    <div className="panel stroke rounded-2xl p-6 max-w-md mx-auto mt-12">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-fuchsia-500/15 border border-fuchsia-500/30 mb-3">
+          <Lock className="h-5 w-5 text-fuchsia-500" />
+        </div>
+        <div className="text-lg font-extrabold">Analytics is password-protected</div>
+        <div className="text-sm opacity-70 mt-1">Enter the admin password to continue.</div>
+      </div>
+
+      <form onSubmit={submit} className="mt-5 space-y-3">
+        <div className="relative">
+          <input
+            type={show ? "text" : "password"}
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            autoFocus
+            placeholder="Password"
+            className="w-full rounded-xl px-4 py-3 pr-20 bg-white/10 dark:bg-white/10 border border-white/15 outline-none focus:border-fuchsia-400/60 transition-colors text-sm font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg text-xs font-bold opacity-60 hover:opacity-100"
+          >
+            {show ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        {err && (
+          <div className="text-xs text-red-400 font-semibold">{err}</div>
+        )}
+
+        <button
+          type="submit"
+          disabled={!pw}
+          className="w-full rounded-xl py-3 font-extrabold bg-fuchsia-500/20 hover:bg-fuchsia-500/30 border border-fuchsia-500/40 text-fuchsia-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Unlock
+        </button>
+
+        <div className="text-[11px] opacity-50 leading-relaxed text-center pt-2">
+          This is a friction layer. The real gate is server-side email allowlist.
+        </div>
+      </form>
     </div>
   );
 }

@@ -401,6 +401,50 @@
 [data-theme="light"] .opacity-75 { opacity: 0.92; }
 
 /* =====================================================
+   LIGHT-MODE SELECTION CONTRAST
+   Active-state utility classes (fuchsia / cyan / amber tints)
+   default to near-white text + pale tinted bg, which disappears
+   on a light background. Bump the bg saturation AND swap text to
+   a dark purple so the selected item is unmistakably highlighted.
+===================================================== */
+
+/* Active text — pale fuchsia/100/200 → deep purple in light mode */
+[data-theme="light"] .text-fuchsia-100 { color: #581c87 !important; }   /* purple-900 */
+[data-theme="light"] .text-fuchsia-200 { color: #6b21a8 !important; }   /* purple-800 */
+[data-theme="light"] .text-fuchsia-300 { color: #7e22ce !important; }   /* purple-700 */
+
+/* Saturate the tinted backgrounds so active surfaces stand out */
+[data-theme="light"] .bg-fuchsia-500\/10 { background-color: rgba(168, 85, 247, 0.18) !important; }
+[data-theme="light"] .bg-fuchsia-500\/15 { background-color: rgba(168, 85, 247, 0.22) !important; }
+[data-theme="light"] .bg-fuchsia-500\/18 { background-color: rgba(168, 85, 247, 0.26) !important; }
+[data-theme="light"] .bg-fuchsia-500\/20 { background-color: rgba(168, 85, 247, 0.30) !important; }
+[data-theme="light"] .bg-fuchsia-500\/25 { background-color: rgba(168, 85, 247, 0.34) !important; }
+[data-theme="light"] .bg-fuchsia-500\/30 { background-color: rgba(168, 85, 247, 0.38) !important; }
+
+/* Replace pale gradients on active nav/tab pills with a denser purple wash */
+[data-theme="light"] .bg-gradient-to-r.from-fuchsia-500\/25.via-cyan-400\/20.to-amber-400\/25,
+[data-theme="light"] .bg-gradient-to-r.from-fuchsia-500\/30.via-cyan-400\/25.to-amber-400\/30 {
+  background: linear-gradient(
+    90deg,
+    rgba(126, 34, 206, 0.30),
+    rgba(56, 189, 248, 0.18),
+    rgba(217, 119, 6, 0.22)
+  ) !important;
+}
+
+/* Mobile bottom-tab active pill */
+[data-theme="light"] .bg-gradient-to-b.from-fuchsia-500\/20.to-cyan-400\/15 {
+  background: linear-gradient(180deg, rgba(126, 34, 206, 0.28), rgba(56, 189, 248, 0.20)) !important;
+}
+
+/* Active borders — strengthen so the pill outlines pop on white */
+[data-theme="light"] .border-fuchsia-400\/25,
+[data-theme="light"] .border-fuchsia-400\/30,
+[data-theme="light"] .border-fuchsia-500\/25,
+[data-theme="light"] .border-fuchsia-500\/30,
+[data-theme="light"] .border-fuchsia-500\/40 { border-color: rgba(126, 34, 206, 0.55) !important; }
+
+/* =====================================================
    MOBILE PERF
 ===================================================== */
 

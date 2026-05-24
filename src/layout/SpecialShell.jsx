@@ -43,7 +43,6 @@ const GAME_DOWNLOAD_URL =
 
 const THEMES = [
   { id: "light",   icon: Sun      },
-  { id: "dark",    icon: Moon     },
   { id: "special", icon: Sparkles },
 ];
 
@@ -662,7 +661,7 @@ export default function SpecialShell() {
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">Theme</span>
                   <div className="flex-1 flex items-center gap-1 rounded-xl border border-white/10 p-1">
-                    {THEMES.filter((t) => t.id !== "dark").map(({ id, icon: Icon }) => (
+                    {THEMES.map(({ id, icon: Icon }) => (
                       <button
                         key={id}
                         onClick={() => setTheme(id)}

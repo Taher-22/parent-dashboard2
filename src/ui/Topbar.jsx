@@ -186,11 +186,10 @@ export default function Topbar() {
           </button>
         )}
 
-        {/* THEME SWITCH — 3-way: Light / Dark / Special */}
+        {/* THEME SWITCH — Light / Special (Dark removed) */}
         <div className="rounded-xl border border-white/15 bg-black/5 dark:bg-white/5 p-0.5 flex items-center gap-0.5">
           {[
             { id: "light",   label: "Light",   icon: Sun      },
-            { id: "dark",    label: "Dark",    icon: Moon     },
             { id: "special", label: "Special", icon: Sparkles },
           ].map(({ id, label, icon: Icon }) => {
             const active = theme === id;
@@ -200,14 +199,11 @@ export default function Topbar() {
                 onClick={() => setTheme(id)}
                 title={label}
                 aria-label={label}
-                className={`rounded-lg px-3 py-2 md:px-2.5 md:py-1.5 text-sm font-semibold items-center gap-1.5 transition-colors min-w-[44px] min-h-[40px] justify-center ${
-                  // Dark mode is hidden on phones — Light + Special only.
-                  id === "dark" ? "hidden md:flex" : "flex"
-                } ${
+                className={`rounded-lg px-3 py-2 md:px-2.5 md:py-1.5 text-sm font-semibold flex items-center gap-1.5 transition-colors min-w-[44px] min-h-[40px] justify-center ${
                   active
                     ? id === "special"
                       ? "bg-gradient-to-r from-fuchsia-500/25 via-cyan-400/20 to-amber-400/25 text-fuchsia-100 border border-fuchsia-400/30"
-                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
                     : "opacity-55 hover:opacity-100"
                 }`}
               >

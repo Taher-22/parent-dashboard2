@@ -37,17 +37,17 @@ app.use("/api/game",      gameRoutes);
 app.use("/api/ai",        aiRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Strict admin check — ONLY emails in the ADMIN_EMAILS env var (CSV,
-// case-insensitive) are admin. If ADMIN_EMAILS is empty, NO ONE is admin.
+// Hardcoded owner allowlist — mirrors analytics.routes.js.
+const HARDCODED_ADMIN_EMAILS = ["nasrrtm@gmail.com"];
+
 function isAdminUser({ email }) {
   if (!email) return false;
+  const e = email.toLowerCase().trim();
+  if (HARDCODED_ADMIN_EMAILS.map((x) => x.toLowerCase()).includes(e)) return true;
   const raw = (process.env.ADMIN_EMAILS || "").trim();
   if (!raw) return false;
-  const allow = raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  return allow.includes(email.toLowerCase());
+  const allow = raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return allow.includes(e);
 }
 
 app.get("/api/me", requireAuth, async (req, res) => {
