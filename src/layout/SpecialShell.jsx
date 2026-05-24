@@ -9,6 +9,7 @@ import {
 
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import useIsAdmin from "../state/useIsAdmin.jsx";
 import { setChildForceStop } from "../lib/api.js";
 import { logout } from "../three/auth/auth";
 
@@ -50,6 +51,7 @@ export default function SpecialShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const isAdmin = useIsAdmin();
   const { kids, activeChild, setActiveChildId, createChild } = useChildren();
 
   const [sheetOpen, setSheetOpen] = useState(false);   // mobile bottom sheet
@@ -305,6 +307,18 @@ export default function SpecialShell() {
               </button>
             ))}
           </div>
+
+          {/* Analytics (admins only, desktop) */}
+          {isAdmin && (
+            <button
+              onClick={() => navigate("/admin/analytics")}
+              title="Site analytics — admin only"
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-200 transition-colors shrink-0"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden lg:inline text-sm font-semibold">Analytics</span>
+            </button>
+          )}
 
           {/* Logout (desktop) */}
           <button
@@ -608,6 +622,18 @@ export default function SpecialShell() {
                     <Download className="h-5 w-5 text-sky-300" />
                     <span className="text-[11px] font-bold text-sky-200">Download</span>
                   </a>
+
+                  {/* Admin-only Analytics tile (spans both columns when present) */}
+                  {isAdmin && (
+                    <NavLink
+                      to="/admin/analytics"
+                      onClick={() => setSheetOpen(false)}
+                      className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500/15 via-purple-500/15 to-fuchsia-500/15 hover:from-fuchsia-500/25 hover:via-purple-500/25 hover:to-fuchsia-500/25 border border-fuchsia-500/30 transition-colors"
+                    >
+                      <BarChart3 className="h-5 w-5 text-fuchsia-200" />
+                      <span className="text-[11px] font-bold text-fuchsia-100 uppercase tracking-wider">Site analytics</span>
+                    </NavLink>
+                  )}
                 </div>
 
                 {/* Child switcher — horizontal chips, only when 2+ kids */}

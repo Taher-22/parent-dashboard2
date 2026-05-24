@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, Sparkles, UserRound, LogOut, Copy, Check, OctagonX, Play } from "lucide-react";
+import { Moon, Sun, Sparkles, UserRound, LogOut, Copy, Check, OctagonX, Play, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import useIsAdmin from "../state/useIsAdmin.jsx";
 import Badge from "./Badge.jsx";
 import { logout } from "../three/auth/auth";
 import { setChildForceStop } from "../lib/api.js";
@@ -24,6 +25,7 @@ const MAIN_MENU_ID = "seed_s_mainmenu";
 export default function Topbar() {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin();
 
   const { kids, activeChild, setActiveChildId, loadingKids } = useChildren();
 
@@ -169,6 +171,18 @@ export default function Topbar() {
             {isStopped
               ? <><Play className="h-4 w-4" /> <span className="hidden md:inline">Resume</span></>
               : <><OctagonX className="h-4 w-4" /> <span className="hidden md:inline">Stop Play</span></>}
+          </button>
+        )}
+
+        {/* ADMIN — site analytics (only renders if backend confirms isAdmin) */}
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/admin/analytics")}
+            title="Site analytics — admin only"
+            className="rounded-xl px-3 md:px-4 py-2 border border-fuchsia-500/30 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 flex items-center gap-2 font-semibold"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden md:inline">Analytics</span>
           </button>
         )}
 
