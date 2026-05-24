@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../lib/api";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useLang } from "../i18n/LangContext.jsx";
 
 export default function Login() {
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -49,11 +51,11 @@ export default function Login() {
       {/* Login Card */}
       <div className="relative z-10 w-full max-w-md panel stroke p-8">
         <h1 className="text-3xl font-semibold text-center mb-2 text-main">
-          Welcome back
+          {t("sign_in_title")}
         </h1>
 
         <p className="text-center text-muted mb-6">
-          Sign in to continue
+          {t("btn_continue")}
         </p>
 
         {error && (
@@ -66,7 +68,7 @@ export default function Login() {
           {/* Email */}
           <div>
             <label className="block text-sm font-medium mb-1 text-main">
-              Email
+              {t("auth_email")}
             </label>
             <input
               type="email"
@@ -89,7 +91,7 @@ export default function Login() {
           {/* Password */}
           <div>
             <label className="block text-sm font-medium mb-1 text-main">
-              Password
+              {t("auth_password")}
             </label>
             <div className="relative">
               <input
@@ -135,22 +137,22 @@ export default function Login() {
             {loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                Signing in...
+                {t("status_loading")}
               </>
             ) : (
-              "Sign In"
+              t("btn_login")
             )}
           </button>
         </form>
 
         {/* Footer */}
         <p className="mt-6 text-center text-sm text-muted">
-          Don’t have an account?{" "}
+          {t("auth_new_account")}{" "}
           <Link
             to="/register"
             className="text-blue-500 hover:underline font-medium"
           >
-            Create one
+            {t("btn_register")}
           </Link>
         </p>
       </div>

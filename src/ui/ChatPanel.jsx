@@ -5,15 +5,15 @@ import { useSearchParams } from "react-router-dom";
 
 import { askAI } from "../lib/api.js";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 
-// Quick-prompt chips. These get rendered as suggestions; clicking sends the
-// text straight as a user turn. Keep them short and action-oriented.
-const SUGGESTIONS = [
-  "What should they practice next?",
-  "Why is accuracy slipping this week?",
-  "How do I motivate them when they're frustrated?",
-  "Are the time limits I have set reasonable?",
-  "Summarize their progress so far",
+// Quick-prompt chip keys (translated at render time).
+const SUGGESTION_KEYS = [
+  "ai_suggest_practice",
+  "ai_suggest_accuracy",
+  "ai_suggest_motivate",
+  "ai_suggest_limits",
+  "ai_suggest_summary",
 ];
 
 function bubbleClass(isUser) {
@@ -24,15 +24,12 @@ function bubbleClass(isUser) {
 
 export default function ChatPanel() {
   const { activeChild } = useChildren();
+  const { t } = useLang();
   const [searchParams] = useSearchParams();
   const subjectFromUrl = searchParams.get("subject") || null;
 
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm your NeuroQuest AI helper. Ask me anything about how your kid's doing — I can see their recent answers, mastery, and scores.",
-    },
+  const [messages, setMessages] = useState(() => [
+    { role: "assistant", content: t("ai_greeting") },
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -72,7 +69,7 @@ export default function ChatPanel() {
       setMessages((cur) => [...cur, { role: "assistant", content: reply || "(no response)" }]);
     } catch (err) {
       console.error(err);
-      setError(err?.message || "AI request failed. Try again in a moment.");
+      setError(err?.message || t("ai_failed"));
       // Roll the user message off so they can edit & retry
       setMessages((cur) => cur.slice(0, -1));
       setInput(trimmed);
@@ -82,22 +79,22 @@ export default function ChatPanel() {
   }
 
   const placeholder = useMemo(() => {
-    if (!activeChild) return "Ask anything about NeuroQuest…";
-    if (subjectFromUrl) return `Ask about ${activeChild.displayName}'s ${subjectFromUrl}…`;
-    return `Ask about ${activeChild.displayName}…`;
-  }, [activeChild, subjectFromUrl]);
+    if (!activeChild) return t("ai_placeholder");
+    if (subjectFromUrl) return `${t("ai_placeholder")} (${activeChild.displayName} · ${subjectFromUrl})`;
+    return `${t("ai_placeholder")} (${activeChild.displayName})`;
+  }, [activeChild, subjectFromUrl, t]);
 
   return (
     <div className="panel stroke rounded-2xl overflow-hidden">
       <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 opacity-85" />
-          <div className="font-extrabold">AI Helper</div>
+          <div className="font-extrabold">{t("ai_title")}</div>
         </div>
         <div className="text-xs opacity-70 truncate">
           {activeChild
-            ? <>Context: <span className="font-semibold">{activeChild.displayName}</span>{subjectFromUrl && <> · {subjectFromUrl}</>}</>
-            : "No child selected"}
+            ? <>{t("ai_context_for")}: <span className="font-semibold">{activeChild.displayName}</span>{subjectFromUrl && <> · {subjectFromUrl}</>}</>
+            : t("ai_context_no_child")}
         </div>
       </div>
 
@@ -122,7 +119,7 @@ export default function ChatPanel() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
             <div className="rounded-2xl px-4 py-3 border bg-white/10 border-white/15 flex items-center gap-2 text-sm opacity-80">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Thinking…</span>
+              <span>{t("ai_thinking")}</span>
             </div>
           </motion.div>
         )}
@@ -136,16 +133,19 @@ export default function ChatPanel() {
       <div className="p-4 border-t border-white/10">
         {/* Suggestion chips */}
         <div className="flex flex-wrap gap-2 mb-3">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => send(s)}
-              disabled={sending}
-              className="text-xs px-3 py-1.5 rounded-full border border-white/15 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {s}
-            </button>
-          ))}
+          {SUGGESTION_KEYS.map((key) => {
+            const text = t(key);
+            return (
+              <button
+                key={key}
+                onClick={() => send(text)}
+                disabled={sending}
+                className="text-xs px-3 py-1.5 rounded-full border border-white/15 bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {text}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex gap-2">
@@ -163,7 +163,7 @@ export default function ChatPanel() {
             className="rounded-xl px-4 py-3 font-extrabold bg-gradient-to-r from-emerald-400/40 via-yellow-300/30 to-purple-400/40 border border-white/20 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            <span className="hidden sm:inline">Send</span>
+            <span className="hidden sm:inline">{t("btn_send")}</span>
           </button>
         </div>
       </div>

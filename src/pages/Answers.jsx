@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Filter, ListChecks, ChevronDown, TimerOff } from "lucide-react";
 
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import { getChildAnswers } from "../lib/api.js";
 
 const FILTERS = [
-  { id: "all",      label: "All",       value: undefined },
-  { id: "wrong",    label: "Wrong",     value: false     },
-  { id: "correct",  label: "Correct",   value: true      },
-  { id: "timedout", label: "Timed Out", value: undefined, timedOut: true },
+  { id: "all",      labelKey: "answers_filter_all",   value: undefined },
+  { id: "wrong",    labelKey: "answers_filter_wrong", value: false     },
+  { id: "correct",  labelKey: "answers_filter_right", value: true      },
+  { id: "timedout", labelKey: "answers_filter_timed", value: undefined, timedOut: true },
 ];
 
 const PAGE_SIZE = 50;
@@ -31,6 +32,7 @@ function formatWhen(iso) {
 
 export default function Answers() {
   const { activeChild } = useChildren();
+  const { t } = useLang();
 
   const [filter, setFilter] = useState("all");
   const [subjectId, setSubjectId] = useState("");
@@ -95,10 +97,10 @@ export default function Answers() {
         <div>
           <div className="flex items-center gap-2.5">
             <ListChecks className="h-7 w-7 text-emerald-400" />
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Answer Review</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">{t("answers_title")}</h1>
           </div>
           <p className="opacity-65 text-sm mt-1">
-            Every question {activeChild.displayName} has answered, newest first.
+            {t("answers_subtitle")}
           </p>
         </div>
 
@@ -106,18 +108,18 @@ export default function Answers() {
         {stats && (
           <div className="flex items-center gap-2 md:gap-3">
             <StatChip
-              label="Accuracy"
+              label={t("kpi_accuracy")}
               value={stats.accuracyPct != null ? `${stats.accuracyPct}%` : "—"}
               tone="emerald"
             />
             <StatChip
-              label="Correct"
+              label={t("answers_filter_right")}
               value={stats.correctAnswers}
               tone="emerald"
               icon={CheckCircle2}
             />
             <StatChip
-              label="Wrong"
+              label={t("answers_filter_wrong")}
               value={stats.wrongAnswers}
               tone="red"
               icon={XCircle}
@@ -142,7 +144,7 @@ export default function Answers() {
                 active ? activeCls : "border-white/15 opacity-65 hover:opacity-100"
               }`}
             >
-              {f.label}
+              {t(f.labelKey)}
             </button>
           );
         })}

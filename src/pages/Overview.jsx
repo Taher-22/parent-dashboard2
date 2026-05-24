@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Clock3, ListChecks, Coins as CoinsIcon, Pencil, Check, X } from "lucide-react";
 
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 
 function CoinsCard({ child, onUpdated }) {
   const [editing, setEditing] = useState(false);
@@ -117,6 +118,7 @@ function formatDateRelative(iso) {
 export default function Overview() {
   const navigate = useNavigate();
   const { kids, activeChild, activeChildId, loadingKids, reloadChildren } = useChildren();
+  const { t } = useLang();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [report,      setReport]      = useState(null);
@@ -201,14 +203,14 @@ export default function Overview() {
       {/* HEADER */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Parent Overview</h1>
-          <p className="opacity-75 mt-1">Time, progress patterns, mastery, and support signals.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("parent_overview")}</h1>
+          <p className="opacity-75 mt-1">{t("overview_tagline")}</p>
         </div>
 
         <div className="hidden md:flex items-center gap-2">
-          <Badge tone="purple"><Sparkles className="h-3.5 w-3.5" /> ADHD-friendly</Badge>
-          <Badge tone="green"> <Clock3   className="h-3.5 w-3.5" /> Micro-sessions</Badge>
-          <Badge tone="orange"><ListChecks className="h-3.5 w-3.5" /> Interventions</Badge>
+          <Badge tone="purple"><Sparkles className="h-3.5 w-3.5" /> {t("badge_adhd")}</Badge>
+          <Badge tone="green"> <Clock3   className="h-3.5 w-3.5" /> {t("badge_micro")}</Badge>
+          <Badge tone="orange"><ListChecks className="h-3.5 w-3.5" /> {t("badge_interventions")}</Badge>
         </div>
       </div>
 
@@ -226,9 +228,9 @@ export default function Overview() {
                 />
               );
             })()}
-            {loadingKids ? "Loading child..." :
-             activeChild ? `Child: ${activeChild.displayName}` :
-                           "No child added yet"}
+            {loadingKids ? t("loading_child") :
+             activeChild ? `${t("child_label")}: ${activeChild.displayName}` :
+                           t("no_child_added")}
           </div>
           {activeChild && (() => {
             const last = activeChild.lastSeenAt ? new Date(activeChild.lastSeenAt).getTime() : 0;
@@ -239,36 +241,36 @@ export default function Overview() {
             };
             const subj = activeChild.currentSubjectId ? (subjectNames[activeChild.currentSubjectId] || activeChild.currentSubjectId) : null;
             const inMenu = activeChild.currentSubjectId === "seed_s_mainmenu";
-            if (online && inMenu)  return <Badge tone="blue">In Main Menu</Badge>;
-            if (online && subj)    return <Badge tone="green">Playing {subj}</Badge>;
-            if (online)            return <Badge tone="green">In game</Badge>;
-            if (last > 0)          return <Badge tone="blue">Offline — last seen {formatDateRelative(activeChild.lastSeenAt)}</Badge>;
-            return <Badge tone="blue">Never connected</Badge>;
+            if (online && inMenu)  return <Badge tone="blue">{t("in_main_menu")}</Badge>;
+            if (online && subj)    return <Badge tone="green">{t("status_playing")} {subj}</Badge>;
+            if (online)            return <Badge tone="green">{t("status_in_game")}</Badge>;
+            if (last > 0)          return <Badge tone="blue">{t("offline_last_seen")} {formatDateRelative(activeChild.lastSeenAt)}</Badge>;
+            return <Badge tone="blue">{t("never_connected")}</Badge>;
           })()}
         </div>
       </Card>
 
       {/* KPI ROW */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <Card title="Today Focus Minutes">
+        <Card title={t("kpi_today_focus")}>
           <div className="flex items-end gap-2">
             <span className="text-5xl font-black text-emerald-400">
               <AnimatedCounter value={kpis.todayFocusMinutes} />
             </span>
-            <span className="pb-2 opacity-70">min</span>
+            <span className="pb-2 opacity-70">{t("minutes")}</span>
           </div>
         </Card>
 
-        <Card title="This Week">
+        <Card title={t("this_week")}>
           <div className="flex items-end gap-2">
             <span className="text-5xl font-black text-sky-400">
               <AnimatedCounter value={kpis.weeklyMinutes} />
             </span>
-            <span className="pb-2 opacity-70">min</span>
+            <span className="pb-2 opacity-70">{t("minutes")}</span>
           </div>
         </Card>
 
-        <Card title="Avg Completion">
+        <Card title={t("avg_completion")}>
           <div className="flex items-end gap-2">
             <span className="text-5xl font-black text-purple-400">
               <AnimatedCounter value={kpis.avgCompletion} />
@@ -277,12 +279,12 @@ export default function Overview() {
           </div>
         </Card>
 
-        <Card title="Total Sessions">
+        <Card title={t("total_sessions")}>
           <div className="flex items-end gap-2">
             <span className="text-5xl font-black text-orange-400">
               <AnimatedCounter value={kpis.totalSessions} />
             </span>
-            <span className="pb-2 opacity-70">sessions</span>
+            <span className="pb-2 opacity-70">{t("sessions")}</span>
           </div>
         </Card>
 
@@ -292,7 +294,7 @@ export default function Overview() {
 
       {/* SECOND ROW */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Card title="Learning Time (7 Days)">
+        <Card title={t("learning_time_7d")}>
           {loadingData && <div className="h-[200px] flex items-center justify-center opacity-60">Loading…</div>}
           {!loadingData && trend?.days?.length ? (
             <div className="flex items-end gap-1.5 h-[200px] pt-3">

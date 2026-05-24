@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useLang } from "../i18n/LangContext.jsx";
 
 export default function Register() {
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -84,11 +86,11 @@ export default function Register() {
       {/* SAME CARD */}
       <div className="relative z-10 w-full max-w-md panel stroke p-8">
         <h1 className="text-3xl font-semibold text-center mb-2 text-main">
-          Create account
+          {t("sign_up_title")}
         </h1>
 
         <p className="text-center text-muted mb-6">
-          Start your journey with us
+          {t("btn_continue")}
         </p>
 
         {error && (
@@ -100,7 +102,7 @@ export default function Register() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium mb-1 text-main">
-              Email
+              {t("auth_email")}
             </label>
             <input
               type="email"
@@ -121,7 +123,7 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-medium mb-1 text-main">
-              Password
+              {t("auth_password")}
             </label>
             <div className="relative">
               <input
@@ -187,18 +189,18 @@ export default function Register() {
             {loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                Creating account...
+                {t("status_loading")}
               </>
             ) : (
-              "Create Account"
+              t("btn_register")
             )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted">
-          Already have an account?{" "}
+          {t("auth_have_account")}{" "}
           <Link to="/login" className="text-blue-500 hover:underline font-medium">
-            Sign in
+            {t("sign_in_title")}
           </Link>
         </p>
       </div>

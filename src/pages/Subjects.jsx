@@ -1,6 +1,7 @@
 import PageTransition from "../ui/PageTransition.jsx";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useLang } from "../i18n/LangContext.jsx";
 
 /* REAL 3D SUBJECTS */
 import SubjectScene from "../three/subjects/SubjectScene.jsx";
@@ -11,40 +12,34 @@ import Science from "../three/subjects/Science.jsx";
 
 /* ---------- DATA ---------- */
 const subjects = [
-  {
-    id: "astronomy",
-    name: "Astronomy",
-    component: <Astronomy />,
-  },
-  {
-    id: "math",
-    name: "Math",
-    component: <Math />,
-  },
-  {
-    id: "reading",
-    name: "Reading",
-    component: <Reading />,
-  },
-  {
-    id: "science",
-    name: "Science",
-    component: <Science />,
-  },
+  { id: "astronomy", nameKey: "subject_astronomy", component: <Astronomy /> },
+  { id: "math",      nameKey: "subject_math",      component: <Math />      },
+  { id: "reading",   nameKey: "subject_reading",   component: <Reading />   },
+  { id: "science",   nameKey: "subject_science",   component: <Science />   },
 ];
 
 export default function Subjects() {
   const navigate = useNavigate();
+  const { t } = useLang();
+
+  // Map subject ids to translation keys so the cards render in the
+  // current language. Falls back to the English literal in the data row.
+  const NAME_KEYS = {
+    math:      "nav_subjects",     // generic fallback; real name below
+    astronomy: "subject_astronomy",
+    reading:   "subject_reading",
+    science:   "subject_science",
+  };
 
   return (
     <PageTransition>
       {/* HEADER */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">
-          Subjects
+          {t("subjects_title")}
         </h1>
         <p className="opacity-75 mt-1">
-          Learning areas represented with interactive 3D objects.
+          {t("subjects_subtitle")}
         </p>
       </div>
 
@@ -67,7 +62,7 @@ export default function Subjects() {
 
             {/* LABEL */}
             <div className="mt-3 text-center font-semibold text-lg">
-              {s.name}
+              {t(s.nameKey)}
             </div>
           </motion.div>
         ))}

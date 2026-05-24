@@ -6,6 +6,7 @@ import Card from "../ui/Card.jsx";
 import Badge from "../ui/Badge.jsx";
 import PageTransition from "../ui/PageTransition.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import { getTimeControls, updateTimeControls } from "../lib/api.js";
 import { clamp } from "../utils/format.js";
 
@@ -46,6 +47,7 @@ function Slider({ label, value, min, max, step = 1, unit = "min", onChange, acce
 
 export default function TimeControl() {
   const { activeChildId } = useChildren();
+  const { t } = useLang();
 
   const [state,   setState]   = useState(DEFAULTS);
   const [loading, setLoading] = useState(false);
@@ -115,8 +117,8 @@ export default function TimeControl() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Time Control</h1>
-          <p className="opacity-75 mt-1">Set playtime limits, breaks, and bedtime rules.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("time_control_title")}</h1>
+          <p className="opacity-75 mt-1">{t("time_control_subtitle")}</p>
         </div>
         <div className="hidden md:flex gap-2">
           <Badge tone="green"><ShieldCheck className="h-3.5 w-3.5" /> Safety</Badge>
@@ -127,7 +129,7 @@ export default function TimeControl() {
 
       {!activeChildId && (
         <div className="opacity-60 text-sm text-center py-16">
-          Add a child first to configure time controls.
+          {t("no_child_added")}
         </div>
       )}
 

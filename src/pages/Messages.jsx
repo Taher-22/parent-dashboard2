@@ -2,12 +2,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, MessageSquare } from "lucide-react";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import { sendMessage } from "../lib/api.js";
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
 
 export default function Messages() {
   const { kids, activeChildId, setActiveChildId } = useChildren();
+  const { t } = useLang();
 
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -34,7 +36,7 @@ export default function Messages() {
     <PageTransition>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Messages</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("messages_title")}</h1>
           <p className="opacity-75 mt-1">Send encouragement and support to your child while they play.</p>
         </div>
       </div>
@@ -42,7 +44,7 @@ export default function Messages() {
       {/* Child selector */}
       <Card title="Select Child">
         {kids.length === 0 ? (
-          <p className="text-sm opacity-60">No children added yet.</p>
+          <p className="text-sm opacity-60">{t("no_child_added")}</p>
         ) : (
           <div className="flex gap-3 flex-wrap">
             {kids.map((kid) => {
@@ -84,7 +86,7 @@ export default function Messages() {
                          text-sm resize-none outline-none focus:border-emerald-500/50 transition-colors
                          placeholder:opacity-40"
               rows={4}
-              placeholder="Type your message here…"
+              placeholder={t("placeholder_message")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
