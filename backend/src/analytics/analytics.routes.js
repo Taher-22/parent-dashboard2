@@ -302,4 +302,257 @@ router.get("/summary", requireAuth, async (req, res) => {
   }
 });
 
+/* ─────────── GET /api/analytics/users ───────────
+ * Admin search of parents. Match by exact id OR substring on email/name.
+ * Empty q returns the most recent N parents.
+ *
+ * Query: ?q=...&limit=50
+ */
+router.get("/users", requireAuth, async (req, res) => {
+  const me = await prisma.parent.findUnique({
+    where:  { id: req.user.id },
+    select: { email: true },
+  });
+  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
+  const q     = (req.query.q || "").toString().trim();
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+
+  const where = q
+    ? {
+        OR: [
+          { id:    q                       },
+          { email: { contains: q }         },
+          { name:  { contains: q }         },
+        ],
+      }
+    : {};
+
+  try {
+    const parents = await prisma.parent.findMany({
+      where,
+      take:    limit,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, email: true, name: true, role: true, createdAt: true,
+        _count: { select: { children: true, messages: true } },
+      },
+    });
+    res.json({ items: parents, count: parents.length, query: q });
+  } catch (err) {
+    console.error("analytics users error:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+/* ─────────── GET /api/analytics/user/:parentId ───────────
+ * Full drill-down on one parent: their children list, total stats per child.
+ */
+router.get("/user/:parentId", requireAuth, async (req, res) => {
+  const me = await prisma.parent.findUnique({
+    where:  { id: req.user.id },
+    select: { email: true },
+  });
+  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
+  try {
+    const parent = await prisma.parent.findUnique({
+      where: { id: req.params.parentId },
+      include: {
+        children: {
+          include: {
+            subjects: { include: { subject: true } },
+            _count: { select: { answers: true, sessions: true, scores: true } },
+          },
+        },
+      },
+    });
+    if (!parent) return res.status(404).json({ error: "Parent not found" });
+
+    const totalMsg = await prisma.message.count({ where: { parentId: parent.id } });
+
+    res.json({
+      parent: {
+        id: parent.id, email: parent.email, name: parent.name, role: parent.role,
+        createdAt: parent.createdAt,
+        messagesSent: totalMsg,
+      },
+      children: parent.children.map((c) => ({
+        id: c.id, displayName: c.displayName, childCode: c.childCode,
+        coins: c.coins, lastSeenAt: c.lastSeenAt, forceStopped: c.forceStopped,
+        createdAt: c.createdAt,
+        counts: c._count,
+        subjects: c.subjects.map((s) => ({
+          subjectId: s.subjectId,
+          subjectName: s.subject?.name || s.subjectId,
+          completion: s.completion,
+          timeSpentSec: s.timeSpentSec,
+          lastPlayedAt: s.lastPlayedAt,
+        })),
+      })),
+    });
+  } catch (err) {
+    console.error("analytics user detail error:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+/* ─────────── GET /api/analytics/children ───────────
+ * Admin search of children. Match by exact id, displayName, childCode,
+ * or parent email substring.
+ *
+ * Query: ?q=...&limit=50
+ */
+router.get("/children", requireAuth, async (req, res) => {
+  const me = await prisma.parent.findUnique({
+    where:  { id: req.user.id },
+    select: { email: true },
+  });
+  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
+  const q     = (req.query.q || "").toString().trim();
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+
+  const where = q
+    ? {
+        OR: [
+          { id:          q                  },
+          { displayName: { contains: q }    },
+          { childCode:   { contains: q }    },
+          { parent:      { email: { contains: q } } },
+          { parentId:    q                  },
+        ],
+      }
+    : {};
+
+  try {
+    const children = await prisma.child.findMany({
+      where,
+      take:    limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        parent: { select: { id: true, email: true, name: true } },
+        _count: { select: { answers: true, sessions: true, scores: true, subjects: true } },
+      },
+    });
+    res.json({
+      items: children.map((c) => ({
+        id: c.id, displayName: c.displayName, childCode: c.childCode,
+        coins: c.coins, lastSeenAt: c.lastSeenAt, forceStopped: c.forceStopped,
+        createdAt: c.createdAt,
+        parent: c.parent,
+        counts: c._count,
+      })),
+      count: children.length,
+      query: q,
+    });
+  } catch (err) {
+    console.error("analytics children error:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
+/* ─────────── GET /api/analytics/child/:childId ───────────
+ * Full drill-down on one child: stats, mastery, recent answers/sessions/scores.
+ */
+router.get("/child/:childId", requireAuth, async (req, res) => {
+  const me = await prisma.parent.findUnique({
+    where:  { id: req.user.id },
+    select: { email: true },
+  });
+  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
+  const childId = req.params.childId;
+
+  try {
+    const child = await prisma.child.findUnique({
+      where: { id: childId },
+      include: {
+        parent:       { select: { id: true, email: true, name: true } },
+        subjects:     { include: { subject: true } },
+        timeControls: true,
+      },
+    });
+    if (!child) return res.status(404).json({ error: "Child not found" });
+
+    const [
+      totalAnswers, correctAnswers, timedOutAnswers,
+      totalSessions, totalPlaySec, recentAnswers, recentSessions, recentScores,
+    ] = await Promise.all([
+      prisma.answerRecord.count({ where: { childId } }),
+      prisma.answerRecord.count({ where: { childId, isCorrect: true } }),
+      prisma.answerRecord.count({ where: { childId, timedOut: true } }),
+      prisma.session.count({ where: { childId } }),
+      prisma.session.aggregate({ where: { childId }, _sum: { durationSec: true } }),
+
+      prisma.answerRecord.findMany({
+        where:   { childId },
+        orderBy: { createdAt: "desc" },
+        take:    20,
+        include: { subject: { select: { name: true } } },
+      }),
+      prisma.session.findMany({
+        where:   { childId },
+        orderBy: { endedAt: "desc" },
+        take:    20,
+        include: { subject: { select: { name: true } } },
+      }),
+      prisma.scoreRecord.findMany({
+        where:   { childId },
+        orderBy: { createdAt: "desc" },
+        take:    10,
+        include: { subject: { select: { name: true } } },
+      }),
+    ]);
+
+    res.json({
+      child: {
+        id: child.id, displayName: child.displayName, childCode: child.childCode,
+        coins: child.coins, lastSeenAt: child.lastSeenAt, currentSubjectId: child.currentSubjectId,
+        forceStopped: child.forceStopped, forceStoppedAt: child.forceStoppedAt,
+        birthdate: child.birthdate, createdAt: child.createdAt,
+        parent: child.parent,
+        timeControls: child.timeControls,
+        subjects: child.subjects.map((s) => ({
+          subjectId: s.subjectId,
+          subjectName: s.subject?.name || s.subjectId,
+          completion: s.completion,
+          timeSpentSec: s.timeSpentSec,
+          lastPlayedAt: s.lastPlayedAt,
+        })),
+      },
+      stats: {
+        totalAnswers, correctAnswers, timedOutAnswers,
+        accuracyPct: totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : null,
+        totalSessions,
+        totalPlaySec: totalPlaySec._sum.durationSec || 0,
+      },
+      recentAnswers: recentAnswers.map((a) => ({
+        id: a.id, subjectId: a.subjectId, subjectName: a.subject?.name || null,
+        question: a.question, userAnswer: a.userAnswer, correctAnswer: a.correctAnswer,
+        isCorrect: a.isCorrect, timedOut: a.timedOut, createdAt: a.createdAt,
+      })),
+      recentSessions: recentSessions.map((s) => ({
+        id: s.id, subjectId: s.subjectId, subjectName: s.subject?.name || null,
+        durationSec: s.durationSec, completion: s.completion, endedAt: s.endedAt,
+      })),
+      recentScores: recentScores.map((s) => ({
+        id: s.id, subjectId: s.subjectId, subjectName: s.subject?.name || null,
+        score: s.score, maxScore: s.maxScore, label: s.label, createdAt: s.createdAt,
+      })),
+    });
+  } catch (err) {
+    console.error("analytics child detail error:", err);
+    res.status(500).json({ error: "failed" });
+  }
+});
+
 export default router;

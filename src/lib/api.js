@@ -206,6 +206,28 @@ export async function getAnalyticsSummary() {
   return request("/api/analytics/summary", { headers: authHeaders() });
 }
 
+export async function searchAnalyticsUsers(q = "", limit = 50) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  return request(`/api/analytics/users?${params.toString()}`, { headers: authHeaders() });
+}
+
+export async function getAnalyticsUser(parentId) {
+  return request(`/api/analytics/user/${parentId}`, { headers: authHeaders() });
+}
+
+export async function searchAnalyticsChildren(q = "", limit = 50) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("limit", String(limit));
+  return request(`/api/analytics/children?${params.toString()}`, { headers: authHeaders() });
+}
+
+export async function getAnalyticsChild(childId) {
+  return request(`/api/analytics/child/${childId}`, { headers: authHeaders() });
+}
+
 /* =========================
    GAME INTEGRATION
 ========================= */
