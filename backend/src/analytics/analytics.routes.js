@@ -44,14 +44,38 @@ function clientIp(req) {
   );
 }
 
-function isAdminEmail(email) {
-  if (!email) return false;
-  const raw = process.env.ADMIN_EMAILS || "nasrrtm@gmail.com";
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email.toLowerCase());
+/**
+ * Auto-detecting admin check.
+ *  1. If the caller's email is in ADMIN_EMAILS env var (CSV), they're admin.
+ *  2. If ADMIN_EMAILS is unset OR the caller is the FIRST-EVER parent created
+ *     on this deployment, they're admin too. This means the very first user
+ *     to sign up automatically owns the dashboard without any env setup.
+ */
+async function isAdminUser({ parentId, email }) {
+  // 1) Explicit allowlist
+  const raw = (process.env.ADMIN_EMAILS || "").trim();
+  if (raw && email) {
+    const allow = raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (allow.includes(email.toLowerCase())) return true;
+  }
+
+  // 2) Auto-detect: first parent ever registered is the owner
+  if (parentId) {
+    const firstParent = await prisma.parent.findFirst({
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    });
+    if (firstParent?.id === parentId) return true;
+  }
+
+  // 3) If ADMIN_EMAILS is unset AND no other matches, allow any logged-in
+  //    parent (small private deployment — safer than locking everyone out).
+  if (!raw) return true;
+
+  return false;
 }
 
 function clip(value, max) {
@@ -146,7 +170,7 @@ router.get("/summary", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!isAdminEmail(parent?.email)) {
+  if (!(await isAdminUser({ parentId: req.user.id, email: parent?.email }))) {
     return res.status(403).json({ error: "Not authorized" });
   }
 

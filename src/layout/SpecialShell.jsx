@@ -22,6 +22,7 @@ import Messages from "../pages/Messages.jsx";
 import Answers from "../pages/Answers.jsx";
 import AdminAnalytics from "../pages/AdminAnalytics.jsx";
 import NotFound from "../pages/NotFound.jsx";
+import ErrorBoundary from "../ui/ErrorBoundary.jsx";
 
 const NAV = [
   { label: "Overview", path: "/overview",     icon: LayoutDashboard },
@@ -363,19 +364,21 @@ export default function SpecialShell() {
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="panel stroke rounded-2xl p-4 md:p-6"
           >
-            <Routes location={location}>
-              <Route path="/" element={<Navigate to="/overview" replace />} />
-              <Route path="/overview"             element={<Overview />} />
-              <Route path="/time-control"         element={<TimeControl />} />
-              <Route path="/subjects"             element={<Subjects />} />
-              <Route path="/subjects/:subjectId"  element={<SubjectDetails />} />
-              <Route path="/reports"              element={<Reports />} />
-              <Route path="/answers"              element={<Answers />} />
-              <Route path="/messages"             element={<Messages />} />
-              <Route path="/ai"                   element={<AIChat />} />
-              <Route path="/admin/analytics"      element={<AdminAnalytics />} />
-              <Route path="*"                     element={<NotFound />} />
-            </Routes>
+            <ErrorBoundary>
+              <Routes location={location}>
+                <Route path="/" element={<Navigate to="/overview" replace />} />
+                <Route path="/overview"             element={<Overview />} />
+                <Route path="/time-control"         element={<TimeControl />} />
+                <Route path="/subjects"             element={<Subjects />} />
+                <Route path="/subjects/:subjectId"  element={<SubjectDetails />} />
+                <Route path="/reports"              element={<Reports />} />
+                <Route path="/answers"              element={<Answers />} />
+                <Route path="/messages"             element={<Messages />} />
+                <Route path="/ai"                   element={<AIChat />} />
+                <Route path="/admin/analytics"      element={<AdminAnalytics />} />
+                <Route path="*"                     element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>
