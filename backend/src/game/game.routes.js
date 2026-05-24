@@ -100,7 +100,25 @@ router.post("/child/:childId/progress", async (req, res) => {
     },
   });
 
-  const normalizedCompletion = Math.max(0, Math.min(100, completion ?? 0));
+  // ── Mastery growth rules ────────────────────────────────────────────
+  // Old behaviour overwrote `completion` to `0` whenever the game
+  // posted progress without an explicit completion value, wiping any
+  // mastery the kid had built up from RecordCorrectAnswer. New rules:
+  //  1. Time played always grows mastery: +1% per minute, additive.
+  //  2. If the game sends an explicit `completion`, treat it as a
+  //     floor-raise (max of current and provided) — never a downgrade.
+  //  3. Mastery via this endpoint never decreases; if you want to
+  //     subtract, that comes only from wrong answers in /answer.
+  const MASTERY_PER_MINUTE = 1.0;
+  const current   = existingProgress?.completion ?? 0;
+  const timeBoost = (Math.max(0, timeSpentSec) / 60) * MASTERY_PER_MINUTE;
+  let nextCompletion = Math.min(100, current + timeBoost);
+
+  if (typeof completion === "number" && completion > nextCompletion) {
+    nextCompletion = Math.min(100, completion);
+  }
+  // Quantise to 0.01 to keep the column tidy.
+  nextCompletion = Math.round(nextCompletion * 100) / 100;
 
   const progress = existingProgress
     ? await prisma.subjectProgress.update({
@@ -114,7 +132,7 @@ router.post("/child/:childId/progress", async (req, res) => {
           timeSpentSec: {
             increment: timeSpentSec,
           },
-          completion: normalizedCompletion,
+          completion: nextCompletion,
           lastPlayedAt: new Date(),
         },
       })
@@ -123,7 +141,7 @@ router.post("/child/:childId/progress", async (req, res) => {
           childId,
           subjectId,
           timeSpentSec,
-          completion: normalizedCompletion,
+          completion: nextCompletion,
           lastPlayedAt: new Date(),
         },
       });
