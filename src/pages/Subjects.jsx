@@ -45,25 +45,27 @@ export default function Subjects() {
         </p>
       </div>
 
-      {/* SUBJECT GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-6">
+      {/* SUBJECT GRID — larger cards, thicker border, taller viewport so
+          each subject reads as a substantial tile. Caps at 4 cols on xl
+          (down from 5) so cards stay roomy on widescreens. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7 md:gap-8 mt-8">
         {subjects.map((s) => (
           <motion.div
             key={s.id}
-            whileHover={{ y: -10, scale: 1.02 }}
+            whileHover={{ y: -10, scale: 1.025 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate(`/subjects/${s.id}`)}
-            className="panel stroke rounded-3xl p-4 cursor-pointer"
+            className="panel stroke rounded-[28px] p-6 md:p-7 cursor-pointer border-2 border-white/15 hover:border-white/25 transition-colors"
           >
-            {/* 3D VIEWPORT */}
-            <div className="h-[220px] w-full">
+            {/* 3D VIEWPORT — bigger square-ish canvas */}
+            <div className="h-[300px] md:h-[340px] w-full">
               <SubjectScene enableControls={false}>
                 {s.component}
               </SubjectScene>
             </div>
 
             {/* LABEL */}
-            <div className="mt-3 text-center font-semibold text-lg">
+            <div className="mt-5 text-center font-extrabold text-xl md:text-2xl tracking-tight">
               {t(s.nameKey)}
             </div>
           </motion.div>
