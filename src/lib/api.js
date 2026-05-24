@@ -109,6 +109,23 @@ export async function setChildForceStop(childId, stopped) {
   });
 }
 
+/* =========================
+   AI CHAT
+========================= */
+
+/**
+ * Send a chat turn to the AI helper.
+ * messages: full conversation so far ([{role: 'user'|'assistant', content: '...'}])
+ * childId / subjectId are optional — provide them so the AI gets grounded context.
+ */
+export async function askAI({ messages, childId, subjectId }) {
+  return request(`/api/ai/chat`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ messages, childId, subjectId }),
+  });
+}
+
 /** body: { coins: absoluteValue } or { delta: relativeChange } */
 export async function setChildCoins(childId, body) {
   return request(`/api/children/${childId}/coins`, {

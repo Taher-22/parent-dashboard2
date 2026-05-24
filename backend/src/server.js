@@ -5,6 +5,7 @@ import authRoutes from "./auth/auth.routes.js";
 import { requireAuth } from "./auth/auth.middleware.js";
 import childrenRoutes from "./children/children.routes.js";
 import gameRoutes from "./game/game.routes.js";
+import aiRoutes from "./ai/ai.routes.js";
 import prisma from "./db/prisma.js";
 
 const app = express();
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/children", childrenRoutes);
 app.use("/api/game", gameRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get("/api/me", requireAuth, async (req, res) => {
   const parent = await prisma.parent.findUnique({
