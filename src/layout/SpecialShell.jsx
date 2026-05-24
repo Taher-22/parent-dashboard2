@@ -37,7 +37,7 @@ const NAV = [
 const MOBILE_TABS = ["/overview", "/subjects", "/answers", "/reports", "/messages"];
 
 const GAME_DOWNLOAD_URL =
-  "https://drive.google.com/uc?export=download&id=1-zN-VFrfzwfPAtmuXPRCWCol1VzS450s";
+  "https://drive.google.com/uc?export=download&id=1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-";
 
 const THEMES = [
   { id: "light",   icon: Sun      },
