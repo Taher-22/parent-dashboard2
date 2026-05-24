@@ -9,9 +9,21 @@ import {
 
 // Frontend password gate. Friction layer in addition to the server-side
 // email check — anyone who somehow reaches the page still has to type this.
-// Stored as a SHA-256 prefix so the literal isn't searchable in the bundle.
 const ANALYTICS_PASSWORD = "12345678#12345678#";
 const PASS_OK_KEY = "nq_analytics_pw_ok";
+
+// In-memory summary cache so refreshes don't flash empty. Survives across
+// component remounts within the same JS session.
+const summaryCache = { data: null };
+
+// Persisted summary cache so even a full page refresh shows old data
+// instantly while we fetch fresh in the background.
+function readCachedSummary() {
+  try { return JSON.parse(sessionStorage.getItem("nq_analytics_summary") || "null"); } catch { return null; }
+}
+function writeCachedSummary(data) {
+  try { sessionStorage.setItem("nq_analytics_summary", JSON.stringify(data)); } catch {}
+}
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid,
 } from "recharts";
@@ -78,10 +90,11 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
-  // Password gate state — cached in sessionStorage so a refresh on the same
-  // tab doesn't force re-entry, but a new browser session does.
+  // Password gate state — cached in localStorage so neither a refresh nor a
+  // tab close forces re-entry. (The server-side email check is the real wall;
+  // this is a friction layer.)
   const [passOk, setPassOk] = useState(() => {
-    try { return sessionStorage.getItem(PASS_OK_KEY) === "1"; } catch { return false; }
+    try { return localStorage.getItem(PASS_OK_KEY) === "1"; } catch { return false; }
   });
 
   function setTab(next) {
@@ -90,6 +103,7 @@ export default function AdminAnalytics() {
       p.set("tab", next);
       p.delete("user");
       p.delete("child");
+      p.delete("q");
       return p;
     });
   }
@@ -144,7 +158,7 @@ export default function AdminAnalytics() {
     return (
       <PageTransition>
         <PasswordGate onUnlock={() => {
-          try { sessionStorage.setItem(PASS_OK_KEY, "1"); } catch {}
+          try { localStorage.setItem(PASS_OK_KEY, "1"); } catch {}
           setPassOk(true);
         }} />
       </PageTransition>
@@ -229,17 +243,29 @@ export default function AdminAnalytics() {
 /* ─── Overview tab ─────────────────────────────────────── */
 
 function OverviewTab() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Seed from cache so a refresh shows the previous payload immediately
+  // while we fetch fresh data in the background.
+  const [data, setData]       = useState(() => summaryCache.data || readCachedSummary());
+  const [loading, setLoading] = useState(!data);
 
   async function load() {
-    setLoading(true);
-    try { setData(await getAnalyticsSummary()); } catch {} finally { setLoading(false); }
+    setLoading((prev) => !data && prev); // only show "loading" when we have nothing
+    try {
+      const fresh = await getAnalyticsSummary();
+      setData(fresh);
+      summaryCache.data = fresh;
+      writeCachedSummary(fresh);
+    } catch {
+      // keep showing whatever we had
+    } finally {
+      setLoading(false);
+    }
   }
   useEffect(() => {
     load();
     const id = setInterval(load, 60_000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const daily = useMemo(() =>
@@ -364,7 +390,10 @@ function OverviewTab() {
 /* ─── Users tab ────────────────────────────────────────── */
 
 function UsersTab({ focusUserId, onFocus, onJumpToChild }) {
-  const [q, setQ] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQ = searchParams.get("q") || "";
+
+  const [q, setQ]             = useState(urlQ);
   const [results, setResults] = useState({ items: [] });
   const [loading, setLoading] = useState(false);
 
@@ -374,7 +403,16 @@ function UsersTab({ focusUserId, onFocus, onJumpToChild }) {
     catch { setResults({ items: [] }); }
     finally { setLoading(false); }
   }
-  useEffect(() => { run(""); }, []);
+  function submit() {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("tab", "users");
+      if (q) p.set("q", q); else p.delete("q");
+      return p;
+    });
+    run(q);
+  }
+  useEffect(() => { run(urlQ); /* run on mount with the URL's q */ }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (focusUserId) {
     return <UserDetail parentId={focusUserId} onBack={() => onFocus(null)} onJumpToChild={onJumpToChild} />;
@@ -385,7 +423,7 @@ function UsersTab({ focusUserId, onFocus, onJumpToChild }) {
       <SearchBar
         placeholder="Search by parent ID, email, or name…"
         value={q} onChange={setQ}
-        onSubmit={() => run(q)}
+        onSubmit={submit}
         loading={loading}
       />
 
@@ -526,7 +564,10 @@ function UserDetail({ parentId, onBack, onJumpToChild }) {
 /* ─── Children tab ─────────────────────────────────────── */
 
 function ChildrenTab({ focusChildId, onFocus, onJumpToUser }) {
-  const [q, setQ] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQ = searchParams.get("q") || "";
+
+  const [q, setQ]             = useState(urlQ);
   const [results, setResults] = useState({ items: [] });
   const [loading, setLoading] = useState(false);
 
@@ -536,7 +577,16 @@ function ChildrenTab({ focusChildId, onFocus, onJumpToUser }) {
     catch { setResults({ items: [] }); }
     finally { setLoading(false); }
   }
-  useEffect(() => { run(""); }, []);
+  function submit() {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("tab", "children");
+      if (q) p.set("q", q); else p.delete("q");
+      return p;
+    });
+    run(q);
+  }
+  useEffect(() => { run(urlQ); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (focusChildId) {
     return <ChildDetail childId={focusChildId} onBack={() => onFocus(null)} onJumpToUser={onJumpToUser} />;
@@ -547,7 +597,7 @@ function ChildrenTab({ focusChildId, onFocus, onJumpToUser }) {
       <SearchBar
         placeholder="Search by child ID, name, child code, or parent email…"
         value={q} onChange={setQ}
-        onSubmit={() => run(q)}
+        onSubmit={submit}
         loading={loading}
       />
 
@@ -785,17 +835,28 @@ function ChildDetail({ childId, onBack, onJumpToUser }) {
 /* ─── Visits tab (recent pageviews) ────────────────────── */
 
 function VisitsTab() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Reuse the shared summary cache so switching to Visits doesn't blank out.
+  const [data, setData]       = useState(() => summaryCache.data || readCachedSummary());
+  const [loading, setLoading] = useState(!data);
 
   async function load() {
-    setLoading(true);
-    try { setData(await getAnalyticsSummary()); } catch {} finally { setLoading(false); }
+    setLoading((prev) => !data && prev);
+    try {
+      const fresh = await getAnalyticsSummary();
+      setData(fresh);
+      summaryCache.data = fresh;
+      writeCachedSummary(fresh);
+    } catch {
+      // keep prior data
+    } finally {
+      setLoading(false);
+    }
   }
   useEffect(() => {
     load();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
