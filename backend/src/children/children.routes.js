@@ -329,6 +329,15 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     select: { id: true, subjectId: true, question: true, options: true, userAnswer: true, correctAnswer: true, timedOut: true, createdAt: true },
   });
 
+  // Recent gameplay sessions (newest first, up to 30) — for the per-subject
+  // "Recent Sessions" panels on SubjectDetails.
+  const recentSessions = await prisma.session.findMany({
+    where: { childId },
+    orderBy: { endedAt: "desc" },
+    take: 30,
+    include: { subject: { select: { id: true, name: true } } },
+  });
+
   // Recent score events (newest first, up to 20) + best score per subject.
   const recentScores = await prisma.scoreRecord.findMany({
     where: { childId },
@@ -404,6 +413,15 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
       maxScore: s.maxScore,
       label: s.label,
       createdAt: s.createdAt,
+    })),
+    recentSessions: recentSessions.map((s) => ({
+      id: s.id,
+      subjectId: s.subjectId,
+      subjectName: s.subject?.name || null,
+      durationSec: s.durationSec,
+      completion: s.completion,
+      startedAt: s.startedAt,
+      endedAt: s.endedAt,
     })),
     rewards: rewards.slice(0, 20), // Last 20 rewards
     timeControls,

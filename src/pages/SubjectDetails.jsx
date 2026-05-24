@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Coins as CoinsIcon, Trophy, TrendingUp } from "lucide-react";
+import {
+  Coins as CoinsIcon, Trophy, TrendingUp,
+  Clock, Target, Activity, AlertTriangle, CheckCircle2, XCircle, TimerOff,
+} from "lucide-react";
 
 import PageTransition from "../ui/PageTransition.jsx";
 import Card from "../ui/Card.jsx";
@@ -40,6 +43,45 @@ function formatWhen(iso) {
   const days = Math.round(h / 24);
   if (days < 7) return `${days}d ago`;
   return d.toLocaleDateString();
+}
+
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return "0m";
+  const totalMin = Math.floor(seconds / 60);
+  if (totalMin < 60) return `${totalMin}m`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+const TONE_CLASSES = {
+  emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+  sky:     "text-sky-400     bg-sky-500/10     border-sky-500/25",
+  amber:   "text-amber-400   bg-amber-500/10   border-amber-500/25",
+  fuchsia: "text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/25",
+};
+
+function StatLine({ icon: Icon, label, value, sub, tone = "emerald" }) {
+  const cls = TONE_CLASSES[tone] || TONE_CLASSES.emerald;
+  return (
+    <div className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${cls}`}>
+      <Icon className="h-5 w-5 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] uppercase tracking-widest opacity-70">{label}</div>
+        <div className="font-extrabold text-lg leading-tight truncate">{value}</div>
+        {sub && <div className="text-[10px] opacity-60 truncate">{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
+function EmptyHint({ icon: Icon, children }) {
+  return (
+    <div className="flex items-start gap-2.5 py-1.5">
+      <Icon className="h-4 w-4 mt-0.5 opacity-50 shrink-0" />
+      <p className="text-sm opacity-70">{children}</p>
+    </div>
+  );
 }
 
 export default function SubjectDetails() {
@@ -84,6 +126,39 @@ export default function SubjectDetails() {
   // Data-driven gate: only render the Coins/Scores panels if we actually have
   // score records for this subject. Hide for subjects that have never had any.
   const hasScoreData = bestScore != null || subjectScores.length > 0;
+
+  // Wrong answers for THIS subject (drives Common Difficulties)
+  const subjectWrongs = (report?.recentWrongAnswers || []).filter(
+    (a) => a.subjectId === backendSubjectId
+  );
+
+  // Sessions for THIS subject (drives Recent Sessions)
+  const subjectSessions = (report?.recentSessions || []).filter(
+    (s) => s.subjectId === backendSubjectId
+  );
+
+  // Detect the most-missed questions for the difficulty panel
+  const repeatedWrongs = useMemo(() => {
+    const counts = new Map();
+    for (const w of subjectWrongs) {
+      const key = w.question || "(no question text)";
+      const entry = counts.get(key) || { question: key, times: 0, sampleCorrect: w.correctAnswer };
+      entry.times += 1;
+      counts.set(key, entry);
+    }
+    return Array.from(counts.values())
+      .sort((a, b) => b.times - a.times)
+      .slice(0, 4);
+  }, [subjectWrongs]);
+
+  // Has this subject been touched at all? — drives Performance Summary content vs empty state
+  const hasAnyActivity =
+    !!subjectRow && (
+      (subjectRow.timeSpentSec || 0) > 0 ||
+      (subjectRow.sessionsCount || 0) > 0 ||
+      (subjectRow.answersTotal || 0) > 0 ||
+      hasScoreData
+    );
 
   return (
     <PageTransition>
@@ -174,34 +249,91 @@ export default function SubjectDetails() {
 
       {/* ───────── GENERIC PANELS (every subject) ───────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+
+        {/* PERFORMANCE SUMMARY — completion %, accuracy, time, sessions */}
         <Card title="Performance Summary">
-          <p className="opacity-80 text-sm">
-            Progress trends, engagement level, and strengths will appear here.
-          </p>
+          {!hasAnyActivity ? (
+            <EmptyHint icon={Activity}>
+              No activity yet. Stats will appear as soon as {activeChild?.displayName || "the child"} plays.
+            </EmptyHint>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <StatLine icon={Target}      label="Mastery"
+                value={`${Math.round(subjectRow.completion || 0)}%`}        tone="emerald" />
+              <StatLine icon={CheckCircle2} label="Accuracy"
+                value={subjectRow.accuracyPct != null ? `${subjectRow.accuracyPct}%` : "—"}
+                sub={subjectRow.answersTotal ? `${subjectRow.answersCorrect}/${subjectRow.answersTotal} answers` : null}
+                tone="sky" />
+              <StatLine icon={Clock}       label="Time"
+                value={formatDuration(subjectRow.timeSpentSec || 0)}        tone="amber" />
+              <StatLine icon={Activity}    label="Sessions"
+                value={subjectRow.sessionsCount || 0}                       tone="fuchsia" />
+            </div>
+          )}
         </Card>
 
+        {/* COMMON DIFFICULTIES — questions the kid keeps missing */}
         <Card title="Common Difficulties">
-          <p className="opacity-80 text-sm">
-            Detected weak points and suggested focus areas.
-          </p>
+          {repeatedWrongs.length === 0 ? (
+            <EmptyHint icon={AlertTriangle}>
+              No wrong answers yet. Once they get something wrong, the most-missed questions will surface here.
+            </EmptyHint>
+          ) : (
+            <div className="space-y-2">
+              {repeatedWrongs.map((w, i) => (
+                <div key={i} className="flex items-start gap-3 px-2.5 py-2 rounded-lg bg-white/5">
+                  <div className="h-7 w-7 shrink-0 rounded-md bg-red-500/15 border border-red-500/30 grid place-items-center font-extrabold text-xs text-red-300">
+                    {w.times > 1 ? `×${w.times}` : "✗"}
+                  </div>
+                  <div className="min-w-0 text-sm">
+                    <div className="font-semibold truncate">{w.question}</div>
+                    {w.sampleCorrect != null && (
+                      <div className="text-xs opacity-60 mt-0.5">
+                        Correct: <span className="font-mono text-emerald-300">{w.sampleCorrect}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
+        {/* RECENT SESSIONS — last few plays of this subject */}
         <Card title="Recent Sessions">
-          <p className="opacity-80 text-sm">
-            Game activity and outcomes.
-          </p>
+          {subjectSessions.length === 0 ? (
+            <EmptyHint icon={Activity}>
+              No sessions recorded yet. Each time {activeChild?.displayName || "the child"} finishes a run, it'll show up here.
+            </EmptyHint>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {subjectSessions.slice(0, 6).map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Clock className="h-4 w-4 opacity-55 shrink-0" />
+                    <span className="font-semibold">{formatDuration(s.durationSec || 0)}</span>
+                    {s.completion != null && (
+                      <span className="text-xs opacity-60">· {Math.round(s.completion)}% done</span>
+                    )}
+                  </div>
+                  <div className="text-xs opacity-55 shrink-0">{formatWhen(s.endedAt)}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
+        {/* AI INSIGHTS — link to the AI chat preloaded with this subject */}
         <Card title="AI Insights">
           <p className="opacity-80 text-sm">
-            Personalized recommendations based on learning behavior
-            and engagement patterns.
+            Ask the AI helper for personalized notes — what to practice next,
+            why a question keeps tripping them up, or how to motivate them.
           </p>
           <button
             onClick={() => navigate(`/ai?subject=${slug}`)}
-            className="mt-4 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 transition"
+            className="mt-4 px-4 py-2 rounded-xl bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-400/30 text-fuchsia-200 font-semibold text-sm transition"
           >
-            Ask AI about {slug}
+            Ask AI about {subjectLabel}
           </button>
         </Card>
       </div>
