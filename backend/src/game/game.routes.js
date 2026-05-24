@@ -296,7 +296,41 @@ router.post("/child/:childId/answer", async (req, res) => {
     },
   });
 
-  res.status(201).json(record);
+  // Mastery bump: every correct answer adds 1% to the SubjectProgress
+  // completion for this subject, capped at 100. Only fires when a subjectId
+  // was provided and the answer was correct (timed-out / wrong don't count).
+  let masteryDelta = 0;
+  let newCompletion = null;
+  if (isCorrect && subjectId) {
+    const existing = await prisma.subjectProgress.findUnique({
+      where: { childId_subjectId: { childId, subjectId } },
+    });
+    const current = existing?.completion ?? 0;
+    newCompletion = Math.min(100, Math.round((current + 1) * 100) / 100);
+    masteryDelta = Math.round((newCompletion - current) * 100) / 100;
+
+    if (existing) {
+      await prisma.subjectProgress.update({
+        where: { childId_subjectId: { childId, subjectId } },
+        data: {
+          completion: newCompletion,
+          lastPlayedAt: new Date(),
+        },
+      });
+    } else {
+      await prisma.subjectProgress.create({
+        data: {
+          childId,
+          subjectId,
+          completion: newCompletion,
+          timeSpentSec: 0,
+          lastPlayedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  res.status(201).json({ ...record, masteryDelta, newCompletion });
 });
 
 /**
