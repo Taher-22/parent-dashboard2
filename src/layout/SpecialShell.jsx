@@ -9,6 +9,7 @@ import {
 
 import { useTheme } from "../state/ThemeContext.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import useIsAdmin from "../state/useIsAdmin.jsx";
 import { setChildForceStop } from "../lib/api.js";
 import { logout } from "../three/auth/auth";
@@ -26,13 +27,13 @@ import NotFound from "../pages/NotFound.jsx";
 import ErrorBoundary from "../ui/ErrorBoundary.jsx";
 
 const NAV = [
-  { label: "Overview", path: "/overview",     icon: LayoutDashboard },
-  { label: "Time",     path: "/time-control", icon: Clock           },
-  { label: "Subjects", path: "/subjects",     icon: Layers          },
-  { label: "Answers",  path: "/answers",      icon: ListChecks      },
-  { label: "Reports",  path: "/reports",      icon: BarChart3       },
-  { label: "Messages", path: "/messages",     icon: MessageSquare   },
-  { label: "AI",       path: "/ai",           icon: Bot             },
+  { labelKey: "nav_overview", path: "/overview",     icon: LayoutDashboard },
+  { labelKey: "nav_time",     path: "/time-control", icon: Clock           },
+  { labelKey: "nav_subjects", path: "/subjects",     icon: Layers          },
+  { labelKey: "nav_answers",  path: "/answers",      icon: ListChecks      },
+  { labelKey: "nav_reports",  path: "/reports",      icon: BarChart3       },
+  { labelKey: "nav_messages", path: "/messages",     icon: MessageSquare   },
+  { labelKey: "nav_ai",       path: "/ai",           icon: Bot             },
 ];
 
 // Mobile bottom tab bar — primary destinations.
@@ -50,6 +51,7 @@ export default function SpecialShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { lang, setLang, t } = useLang();
   const isAdmin = useIsAdmin();
   const { kids, activeChild, setActiveChildId, createChild } = useChildren();
 
@@ -154,7 +156,7 @@ export default function SpecialShell() {
 
           {/* Desktop primary nav */}
           <div className="hidden md:flex items-center gap-0.5 flex-1 min-w-0 overflow-x-auto">
-            {NAV.map(({ label, path, icon: Icon }) => (
+            {NAV.map(({ labelKey, path, icon: Icon }) => (
               <NavLink key={path} to={path}>
                 {({ isActive }) => (
                   <motion.div
@@ -173,7 +175,7 @@ export default function SpecialShell() {
                       />
                     )}
                     <Icon className="relative h-4 w-4" />
-                    <span className="relative">{label}</span>
+                    <span className="relative">{t(labelKey)}</span>
                   </motion.div>
                 )}
               </NavLink>
@@ -287,6 +289,27 @@ export default function SpecialShell() {
             </div>
           )}
 
+          {/* Language switch (desktop): EN ⇄ AR */}
+          <div className="hidden md:flex items-center gap-0.5 rounded-xl border border-white/15 p-0.5 shrink-0 text-xs font-bold">
+            {[
+              { id: "en", label: "EN" },
+              { id: "ar", label: "ع" },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setLang(id)}
+                title={id === "en" ? "English" : "العربية"}
+                className={`px-2 py-1 rounded-lg transition-colors min-w-[28px] ${
+                  lang === id
+                    ? "bg-fuchsia-500/20 text-fuchsia-100"
+                    : "opacity-55 hover:opacity-100"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Theme switch (desktop) */}
           <div className="hidden md:flex items-center gap-0.5 rounded-xl border border-white/15 p-0.5 shrink-0">
             {THEMES.map(({ id, icon: Icon }) => (
@@ -322,11 +345,11 @@ export default function SpecialShell() {
           {/* Logout (desktop) */}
           <button
             onClick={() => logout(navigate)}
-            title="Logout"
+            title={t("nav_logout")}
             className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-colors shrink-0"
           >
             <LogOut className="h-4 w-4" />
-            <span className="hidden lg:inline text-sm font-semibold">Logout</span>
+            <span className="hidden lg:inline text-sm font-semibold">{t("nav_logout")}</span>
           </button>
 
           {/* Mobile quick theme toggle (Light ↔ Special only) */}
@@ -404,7 +427,7 @@ export default function SpecialShell() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3"
       >
         <div className="panel stroke rounded-2xl p-1.5 flex items-center justify-around">
-          {mobileNavItems.map(({ label, path, icon: Icon }) => (
+          {mobileNavItems.map(({ labelKey, path, icon: Icon }) => (
             <NavLink key={path} to={path} className="flex-1">
               {({ isActive }) => (
                 <motion.div
@@ -421,7 +444,7 @@ export default function SpecialShell() {
                     />
                   )}
                   <Icon className="relative h-5 w-5" />
-                  <span className="relative text-[10px] font-bold tracking-wide">{label}</span>
+                  <span className="relative text-[10px] font-bold tracking-wide">{t(labelKey)}</span>
                 </motion.div>
               )}
             </NavLink>
@@ -657,7 +680,30 @@ export default function SpecialShell() {
                   </div>
                 )}
 
-                {/* Theme switch — Light + Special only on mobile (Dark not exposed). */}
+                {/* Language switch (mobile) */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">
+                    {t("language_label")}
+                  </span>
+                  <div className="flex-1 flex items-center gap-1 rounded-xl border border-white/10 p-1">
+                    {[
+                      { id: "en", label: "English" },
+                      { id: "ar", label: "العربية" },
+                    ].map(({ id, label }) => (
+                      <button
+                        key={id}
+                        onClick={() => setLang(id)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                          lang === id ? "bg-fuchsia-500/25 text-fuchsia-100" : "opacity-55"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Theme switch — Light + Special only on mobile (Dark removed). */}
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest opacity-50 shrink-0">Theme</span>
                   <div className="flex-1 flex items-center gap-1 rounded-xl border border-white/10 p-1">

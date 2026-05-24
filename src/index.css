@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Arabic webfont — Cairo handles UI weights and full diacritic range. */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
+html[lang="ar"], html[lang="ar"] body, html[lang="ar"] input, html[lang="ar"] button, html[lang="ar"] textarea, html[lang="ar"] select {
+  font-family: 'Cairo', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* RTL: flip the physical text-align utilities Tailwind ships. Flexbox
+   already reverses naturally because of dir, so most layouts work
+   without further tweaks. */
+[dir="rtl"] .text-left  { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .ml-auto    { margin-left: 0;  margin-right: auto; }
+[dir="rtl"] .mr-auto    { margin-right: 0; margin-left: auto;  }
+
 /* =====================================================
    THEME TOKENS
 ===================================================== */

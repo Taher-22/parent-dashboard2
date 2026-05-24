@@ -12,6 +12,7 @@ import {
 import PageTransition from "../ui/PageTransition.jsx";
 import Badge from "../ui/Badge.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
+import { useLang } from "../i18n/LangContext.jsx";
 import { getChildReport, getTimeTrend } from "../lib/api.js";
 
 /* ─── helpers ───────────────────────────────────────────────────────── */
@@ -130,6 +131,7 @@ function buildHotspots(recentWrongs) {
 
 export default function Reports() {
   const { kids, activeChild, activeChildId, setActiveChildId } = useChildren();
+  const { t } = useLang();
 
   const [report,  setReport]  = useState(null);
   const [trend,   setTrend]   = useState(null);
@@ -302,9 +304,9 @@ export default function Reports() {
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 flex-wrap" data-print="hide">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Reports</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("reports_title")}</h1>
           <p className="opacity-75 mt-1 text-sm">
-            Progress report — print or save as PDF using your browser.
+            {t("reports_subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -355,7 +357,7 @@ export default function Reports() {
                        font-semibold text-sm transition-colors"
           >
             <Printer className="h-4 w-4 opacity-80" />
-            Save PDF
+            {t("btn_save_pdf")}
           </button>
         </div>
       </div>

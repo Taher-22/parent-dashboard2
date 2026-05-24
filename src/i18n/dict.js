@@ -1,0 +1,284 @@
+// Translation dictionary. Add new keys here and they're available everywhere
+// via the `t(key)` function from useLang(). Falls back to English when a
+// translation is missing, then to the key itself.
+//
+// Keep keys snake_case_with_underscores so they're easy to scan.
+
+export const STRINGS = {
+  /* =========================
+     ENGLISH
+  ========================= */
+  en: {
+    // Brand
+    brand:             "NeuroQuest",
+    brand_subtitle:    "Parent Dashboard",
+
+    // Nav / pages
+    nav_overview:      "Overview",
+    nav_time:          "Time",
+    nav_time_control:  "Time Control",
+    nav_subjects:      "Subjects",
+    nav_answers:       "Answers",
+    nav_reports:       "Reports",
+    nav_messages:      "Messages",
+    nav_ai:            "AI",
+    nav_ai_helper:     "AI Helper",
+    nav_admin:         "Analytics",
+    nav_download:      "Download",
+    nav_logout:        "Logout",
+
+    // Common buttons
+    btn_save:          "Save",
+    btn_cancel:        "Cancel",
+    btn_close:         "Close",
+    btn_add:           "Add",
+    btn_add_child:     "Add Child",
+    btn_create:        "Create",
+    btn_creating:      "Creating…",
+    btn_delete:        "Delete",
+    btn_edit:          "Edit",
+    btn_refresh:       "Refresh",
+    btn_send:          "Send",
+    btn_login:         "Login",
+    btn_register:      "Register",
+    btn_print:         "Print / Save PDF",
+    btn_save_pdf:      "Save PDF",
+    btn_resume:        "Resume",
+    btn_stop_play:     "Stop Play",
+    btn_unlock:        "Unlock",
+
+    // Status badges
+    status_online:        "Online",
+    status_offline:       "Offline",
+    status_stopped:       "Stopped",
+    status_in_game:       "In game",
+    status_in_main_menu:  "In Main Menu",
+    status_playing:       "Playing",
+    status_loading:       "Loading…",
+    status_no_child:      "No child selected",
+
+    // Theme switcher
+    theme_light:       "Light",
+    theme_special:     "Special",
+
+    // Auth pages
+    auth_email:        "Email",
+    auth_password:     "Password",
+    auth_have_account: "Already have an account?",
+    auth_new_account:  "Don't have an account yet?",
+
+    // Add Child modal
+    add_child_title:   "New Child",
+    child_name:        "Child's name",
+    child_code_label:  "Game Access Code",
+    child_code_hint:   "Give this code to your child to link their game account.",
+
+    // Overview
+    overview_title:        "Overview",
+    overview_subtitle:     "Snapshot of today's activity and progress",
+    kpi_play_time:         "Play time",
+    kpi_today_focus:       "Today Focus Minutes",
+    kpi_sessions:          "Sessions",
+    kpi_accuracy:          "Accuracy",
+    kpi_avg_mastery:       "Avg mastery",
+    kpi_best_score:        "Best score",
+    kpi_top_subject:       "Top subject",
+    kpi_coins:             "Coins",
+
+    // Subjects
+    subjects_title:        "Subjects",
+    subject_mastery:       "Subject Mastery",
+    mastery_strong:        "Strong",
+    mastery_progressing:   "Progressing",
+    mastery_needs_focus:   "Needs focus",
+    no_subjects_yet:       "No subjects played yet — values appear here once they start the game.",
+
+    // Reports
+    reports_title:         "Reports",
+    reports_subtitle:      "Progress report — print or save as PDF using your browser.",
+    coin_balance:          "Coin balance",
+    overall_accuracy:      "Overall accuracy",
+    section_strengths:     "Strengths & focus",
+    section_strength:      "Strength",
+    section_focus:         "Focus area",
+    section_mistakes:      "Common mistakes",
+    section_recent:        "Recent sessions",
+    section_7day:          "7-day activity",
+    section_scorecard:     "Subject scorecard",
+    correct_answer_was:    "Correct answer",
+    times_repeated:        "times",
+
+    // Answers tab
+    answers_title:         "Answers",
+    answers_filter_all:    "All",
+    answers_filter_right:  "Correct",
+    answers_filter_wrong:  "Wrong",
+    answers_filter_timed:  "Timed Out",
+    answers_correct:       "CORRECT",
+    answers_wrong:         "WRONG",
+    answers_timed_out:     "TIMED OUT",
+    answers_no_answer:     "No answer given",
+
+    // Time control
+    time_control_title:    "Time Control",
+    time_daily_limit:      "Daily limit",
+    time_session_length:   "Session length",
+    time_break:            "Break",
+    time_allowed_from:     "Allowed from",
+    time_allowed_to:       "Allowed to",
+    time_bedtime:          "Bedtime block",
+    minutes:               "min",
+
+    // AI Helper
+    ai_title:              "AI Helper",
+    ai_context_no_child:   "No child selected",
+    ai_context_for:        "Context",
+    ai_placeholder:        "Ask anything about NeuroQuest…",
+    ai_thinking:           "Thinking…",
+    ai_failed:             "AI request failed. Try again in a moment.",
+
+    // Messages
+    messages_title:        "Messages",
+    messages_send_to:      "Send a message",
+
+    // Misc
+    last_played:           "last played",
+    last_seen:             "last seen",
+    just_now:              "just now",
+    ago_m:                 "m ago",
+    ago_h:                 "h ago",
+    ago_d:                 "d ago",
+    language_label:        "Language",
+  },
+
+  /* =========================
+     ARABIC
+  ========================= */
+  ar: {
+    brand:             "نيوروكويست",
+    brand_subtitle:    "لوحة تحكم ولي الأمر",
+
+    nav_overview:      "نظرة عامة",
+    nav_time:          "الوقت",
+    nav_time_control:  "التحكم بالوقت",
+    nav_subjects:      "المواد",
+    nav_answers:       "الإجابات",
+    nav_reports:       "التقارير",
+    nav_messages:      "الرسائل",
+    nav_ai:            "ذكاء",
+    nav_ai_helper:     "مساعد الذكاء الاصطناعي",
+    nav_admin:         "التحليلات",
+    nav_download:      "تحميل",
+    nav_logout:        "تسجيل الخروج",
+
+    btn_save:          "حفظ",
+    btn_cancel:        "إلغاء",
+    btn_close:         "إغلاق",
+    btn_add:           "إضافة",
+    btn_add_child:     "إضافة طفل",
+    btn_create:        "إنشاء",
+    btn_creating:      "جاري الإنشاء…",
+    btn_delete:        "حذف",
+    btn_edit:          "تعديل",
+    btn_refresh:       "تحديث",
+    btn_send:          "إرسال",
+    btn_login:         "تسجيل الدخول",
+    btn_register:      "إنشاء حساب",
+    btn_print:         "طباعة / حفظ PDF",
+    btn_save_pdf:      "حفظ PDF",
+    btn_resume:        "استئناف",
+    btn_stop_play:     "إيقاف اللعب",
+    btn_unlock:        "فتح",
+
+    status_online:        "متصل",
+    status_offline:       "غير متصل",
+    status_stopped:       "موقوف",
+    status_in_game:       "داخل اللعبة",
+    status_in_main_menu:  "في القائمة الرئيسية",
+    status_playing:       "يلعب",
+    status_loading:       "جاري التحميل…",
+    status_no_child:      "لم يتم اختيار طفل",
+
+    theme_light:       "فاتح",
+    theme_special:     "مميز",
+
+    auth_email:        "البريد الإلكتروني",
+    auth_password:     "كلمة المرور",
+    auth_have_account: "لديك حساب بالفعل؟",
+    auth_new_account:  "ليس لديك حساب بعد؟",
+
+    add_child_title:   "طفل جديد",
+    child_name:        "اسم الطفل",
+    child_code_label:  "رمز الوصول للعبة",
+    child_code_hint:   "أعطِ هذا الرمز لطفلك لربط حسابه باللعبة.",
+
+    overview_title:        "نظرة عامة",
+    overview_subtitle:     "ملخص نشاط اليوم والتقدم",
+    kpi_play_time:         "وقت اللعب",
+    kpi_today_focus:       "دقائق التركيز اليوم",
+    kpi_sessions:          "الجلسات",
+    kpi_accuracy:          "الدقة",
+    kpi_avg_mastery:       "متوسط الإتقان",
+    kpi_best_score:        "أعلى نتيجة",
+    kpi_top_subject:       "المادة الأكثر لعباً",
+    kpi_coins:             "العملات",
+
+    subjects_title:        "المواد",
+    subject_mastery:       "إتقان المواد",
+    mastery_strong:        "ممتاز",
+    mastery_progressing:   "يتقدم",
+    mastery_needs_focus:   "يحتاج تركيز",
+    no_subjects_yet:       "لم يبدأ بأي مادة بعد — ستظهر هنا حالما يبدأ اللعب.",
+
+    reports_title:         "التقارير",
+    reports_subtitle:      "تقرير التقدم — اطبعه أو احفظه كملف PDF من المتصفح.",
+    coin_balance:          "رصيد العملات",
+    overall_accuracy:      "الدقة الإجمالية",
+    section_strengths:     "نقاط القوة والتركيز",
+    section_strength:      "نقطة قوة",
+    section_focus:         "مجال التركيز",
+    section_mistakes:      "الأخطاء الشائعة",
+    section_recent:        "الجلسات الأخيرة",
+    section_7day:          "نشاط آخر 7 أيام",
+    section_scorecard:     "بطاقة الأداء حسب المادة",
+    correct_answer_was:    "الإجابة الصحيحة",
+    times_repeated:        "مرات",
+
+    answers_title:         "الإجابات",
+    answers_filter_all:    "الكل",
+    answers_filter_right:  "صحيحة",
+    answers_filter_wrong:  "خاطئة",
+    answers_filter_timed:  "انتهى الوقت",
+    answers_correct:       "صحيحة",
+    answers_wrong:         "خاطئة",
+    answers_timed_out:     "انتهى الوقت",
+    answers_no_answer:     "لم يجب",
+
+    time_control_title:    "التحكم بالوقت",
+    time_daily_limit:      "الحد اليومي",
+    time_session_length:   "مدة الجلسة",
+    time_break:            "الاستراحة",
+    time_allowed_from:     "السماح من",
+    time_allowed_to:       "السماح إلى",
+    time_bedtime:          "حظر النوم",
+    minutes:               "د",
+
+    ai_title:              "مساعد الذكاء الاصطناعي",
+    ai_context_no_child:   "لم يتم اختيار طفل",
+    ai_context_for:        "السياق",
+    ai_placeholder:        "اسأل أي شيء عن نيوروكويست…",
+    ai_thinking:           "يفكر…",
+    ai_failed:             "فشل طلب الذكاء الاصطناعي. حاول مرة أخرى بعد قليل.",
+
+    messages_title:        "الرسائل",
+    messages_send_to:      "إرسال رسالة",
+
+    last_played:           "آخر لعب",
+    last_seen:             "آخر ظهور",
+    just_now:              "الآن",
+    ago_m:                 "د",
+    ago_h:                 "س",
+    ago_d:                 "ي",
+    language_label:        "اللغة",
+  },
+};
