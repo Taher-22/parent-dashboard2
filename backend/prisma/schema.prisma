@@ -204,6 +204,11 @@ model PageView {
   // True if a logged-in parent triggered the view
   isParent   Boolean  @default(false)
 
+  // Identity of the logged-in parent at the time of the visit (best-effort).
+  // Decoded server-side from the Authorization header — never client-supplied.
+  parentId    String?  @db.VarChar(64)
+  parentEmail String?  @db.VarChar(200)
+
   // Time on page, updated by /heartbeat (clamped to a sane upper bound)
   durationMs Int      @default(0)
 

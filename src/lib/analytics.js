@@ -173,10 +173,19 @@ export async function trackPageview(path, opts = {}) {
   const [geo] = await Promise.all([fetchGeo()]);
   const ua = parseUA();
 
+  // Send the parent's auth token if we have one — the backend decodes it
+  // to attach the email to the row. Server-side decode means clients can't
+  // spoof someone else's identity.
+  let token = null;
+  try { token = localStorage.getItem("token"); } catch {}
+
   try {
     const res = await fetch(`${API_URL}/api/analytics/pageview`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         sessionId: getSessionId(),
         path,

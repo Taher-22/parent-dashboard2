@@ -17,11 +17,27 @@
 
 import express from "express";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 import prisma from "../db/prisma.js";
 import { requireAuth } from "../auth/auth.middleware.js";
 
 const router = express.Router();
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
+
+// Silently decode the Authorization header if present and valid.
+// Returns { id } for logged-in callers, or null otherwise. Never throws.
+function peekIdentity(req) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith("Bearer ")) return null;
+  try {
+    const payload = jwt.verify(header.split(" ")[1], JWT_SECRET);
+    return payload?.id ? { id: payload.id } : null;
+  } catch {
+    return null;
+  }
+}
 
 const IP_SALT = process.env.IP_HASH_SALT || "neuroquest-default-salt-please-change";
 
@@ -91,6 +107,26 @@ router.post("/pageview", async (req, res) => {
 
   const ipHash = hashIP(clientIp(req));
 
+  // Identity is decoded server-side from the JWT — never trust the
+  // client-provided isParent flag for the email lookup.
+  const identity = peekIdentity(req);
+  let parentId    = null;
+  let parentEmail = null;
+  if (identity?.id) {
+    try {
+      const p = await prisma.parent.findUnique({
+        where:  { id: identity.id },
+        select: { id: true, email: true },
+      });
+      if (p) {
+        parentId    = p.id;
+        parentEmail = p.email;
+      }
+    } catch {
+      // ignore — tracking is best-effort
+    }
+  }
+
   try {
     const pv = await prisma.pageView.create({
       data: {
@@ -105,7 +141,11 @@ router.post("/pageview", async (req, res) => {
         os:        clip(ua?.os,       32),
         device:    clip(ua?.device,   16),
         ipHash,
-        isParent:  Boolean(isParent),
+        // FE's isParent flag is informational; ground truth is whether
+        // we successfully decoded a JWT identity above.
+        isParent:  Boolean(parentEmail) || Boolean(isParent),
+        parentId,
+        parentEmail,
       },
       select: { id: true },
     });
@@ -231,6 +271,7 @@ router.get("/summary", requireAuth, async (req, res) => {
           id: true, path: true, country: true, city: true, region: true,
           org: true, browser: true, os: true, device: true,
           durationMs: true, isParent: true, sessionId: true,
+          parentId: true, parentEmail: true,
           createdAt: true, referrer: true,
         },
       }),
@@ -263,19 +304,21 @@ router.get("/summary", requireAuth, async (req, res) => {
         views: Number(r.views),
       })),
       recent: recent.map((r) => ({
-        id:         r.id,
-        path:       r.path,
-        location:   [r.city, r.region, r.country].filter(Boolean).join(", ") || "—",
-        country:    r.country,
-        org:        r.org,
-        device:     r.device || "desktop",
-        browser:    r.browser,
-        os:         r.os,
-        durationMs: r.durationMs,
-        isParent:   r.isParent,
-        sessionId:  r.sessionId,
-        referrer:   r.referrer,
-        createdAt:  r.createdAt,
+        id:           r.id,
+        path:         r.path,
+        location:     [r.city, r.region, r.country].filter(Boolean).join(", ") || "—",
+        country:      r.country,
+        org:          r.org,
+        device:       r.device || "desktop",
+        browser:      r.browser,
+        os:           r.os,
+        durationMs:   r.durationMs,
+        isParent:     r.isParent,
+        parentId:     r.parentId,
+        parentEmail:  r.parentEmail,
+        sessionId:    r.sessionId,
+        referrer:     r.referrer,
+        createdAt:    r.createdAt,
       })),
     });
   } catch (err) {

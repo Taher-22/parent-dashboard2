@@ -809,13 +809,14 @@ function VisitsTab() {
 
       <div className="panel stroke rounded-2xl p-5">
         <div className="text-sm font-bold">Recent visits</div>
-        <div className="text-xs text-muted mt-0.5">Most recent 40 pageviews</div>
+        <div className="text-xs text-muted mt-0.5">Most recent 40 pageviews · logged-in visitors show their email</div>
 
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-sm min-w-[820px]">
+          <table className="w-full text-sm min-w-[920px]">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wider opacity-50 border-b border-white/10">
                 <th className="py-2 pr-3">When</th>
+                <th className="py-2 pr-3">Visitor</th>
                 <th className="py-2 pr-3">Page</th>
                 <th className="py-2 pr-3">Where</th>
                 <th className="py-2 pr-3">Network</th>
@@ -827,10 +828,17 @@ function VisitsTab() {
               {(data?.recent || []).map((r) => (
                 <tr key={r.id} className="border-b border-white/5 last:border-0 align-top">
                   <td className="py-2 pr-3 whitespace-nowrap opacity-80">{fmtAgo(r.createdAt)}</td>
-                  <td className="py-2 pr-3 font-mono text-xs">
-                    {r.path}
-                    {r.isParent && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-bold">parent</span>}
+                  <td className="py-2 pr-3 whitespace-nowrap">
+                    {r.parentEmail ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-bold">
+                        <Mail className="h-3 w-3 opacity-80" />
+                        {r.parentEmail}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] opacity-50 italic">anonymous</span>
+                    )}
                   </td>
+                  <td className="py-2 pr-3 font-mono text-xs">{r.path}</td>
                   <td className="py-2 pr-3 whitespace-nowrap">
                     {r.country && <span className="mr-1">{flagEmoji(r.country)}</span>}
                     {r.location}
@@ -843,7 +851,7 @@ function VisitsTab() {
                 </tr>
               ))}
               {!data?.recent?.length && (
-                <tr><td className="py-4 opacity-55 text-sm" colSpan={6}>
+                <tr><td className="py-4 opacity-55 text-sm" colSpan={7}>
                   {loading ? "Loading…" : "No pageviews recorded yet."}
                 </td></tr>
               )}
