@@ -183,8 +183,8 @@ model PageView {
   id         String   @id @default(cuid())
 
   sessionId  String   @db.VarChar(64)    // anonymous client-generated UUID (sessionStorage)
-  path       String   @db.Text
-  referrer   String?  @db.Text
+  path       String   @db.VarChar(500)   // VARCHAR (not TEXT) so MySQL can index it
+  referrer   String?  @db.VarChar(500)
 
   // Coarse IP-derived geo. Fetched by the client from ipapi.co — we
   // never store lat/lng. Server stores whatever the client sent.
