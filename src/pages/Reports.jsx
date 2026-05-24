@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Printer, AlertTriangle, Trophy, Clock, Star, TrendingUp, Target,
   BookOpen, Award, Activity, CheckCircle2, XCircle, Calendar, Sparkles,
-  ListChecks, TimerOff, Sun, Moon,
+  ListChecks, TimerOff, Sun, Moon, Coins as CoinsIcon,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell,
@@ -392,13 +392,23 @@ export default function Reports() {
                   {summary.lastActivityAt && <span>· Last active {fmtAgo(summary.lastActivityAt)}</span>}
                 </div>
               </div>
-              {aggAcc && (
+              <div className="flex items-start gap-5">
+                {/* Coins badge — always visible so parent can see balance at a glance */}
                 <div className="text-right">
-                  <div className={`text-3xl font-black ${accColor(aggAcc.pct)}`}>{aggAcc.pct}%</div>
-                  <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Overall accuracy</div>
-                  <div className="text-[10px] opacity-50 mt-0.5">{aggAcc.correct} / {aggAcc.total} answered</div>
+                  <div className="text-3xl font-black text-yellow-400 flex items-center justify-end gap-1.5">
+                    <CoinsIcon className="h-6 w-6" />
+                    {child?.coins ?? 0}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Coin balance</div>
                 </div>
-              )}
+                {aggAcc && (
+                  <div className="text-right">
+                    <div className={`text-3xl font-black ${accColor(aggAcc.pct)}`}>{aggAcc.pct}%</div>
+                    <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Overall accuracy</div>
+                    <div className="text-[10px] opacity-50 mt-0.5">{aggAcc.correct} / {aggAcc.total} answered</div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {narrative && (
@@ -409,7 +419,8 @@ export default function Reports() {
           </div>
 
           {/* KPI strip */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 print-avoid-break">
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 print-avoid-break">
+            <KPI icon={CoinsIcon}  label="Coins"          value={String(child?.coins ?? 0)}              tone="text-yellow-400" />
             <KPI icon={Clock}      label="Play time"      value={formatTime(summary.totalPlayTimeSec)} />
             <KPI icon={Activity}   label="Sessions"       value={String(summary.totalSessions ?? 0)} />
             <KPI icon={Target}     label="Accuracy"       value={aggAcc ? `${aggAcc.pct}%` : "—"} />
@@ -687,14 +698,14 @@ export default function Reports() {
 
 /* ─── small bits ────────────────────────────────────────────────────── */
 
-function KPI({ icon: Icon, label, value, sub }) {
+function KPI({ icon: Icon, label, value, sub, tone }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex flex-col gap-1 min-w-0">
       <div className="flex items-center gap-1.5 text-[10px] opacity-55 uppercase tracking-wider font-bold">
         {Icon && <Icon className="h-3 w-3" />}
         <span>{label}</span>
       </div>
-      <span className="text-lg font-extrabold truncate">{value}</span>
+      <span className={`text-lg font-extrabold truncate ${tone || ""}`}>{value}</span>
       {sub && <span className="text-[11px] opacity-50 truncate">{sub}</span>}
     </div>
   );
