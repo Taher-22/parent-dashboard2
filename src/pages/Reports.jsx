@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Printer, AlertTriangle, Trophy, Clock, Star, TrendingUp, Target,
   BookOpen, Award, Activity, CheckCircle2, XCircle, Calendar, Sparkles,
-  ListChecks, TimerOff, Sun, Moon, Coins as CoinsIcon,
+  ListChecks, TimerOff, Sun, Moon, Coins as CoinsIcon, Bot, Copy, Check, FileText,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell,
@@ -13,7 +13,7 @@ import PageTransition from "../ui/PageTransition.jsx";
 import Badge from "../ui/Badge.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
 import { useLang } from "../i18n/LangContext.jsx";
-import { getChildReport, getTimeTrend } from "../lib/api.js";
+import { getChildReport, getTimeTrend, askAI } from "../lib/api.js";
 
 /* ─── helpers ───────────────────────────────────────────────────────── */
 
@@ -43,9 +43,9 @@ function fmtAgo(d) {
 }
 
 function statusFromMastery(pct) {
-  if (pct >= 70) return { label: "Strong",      tone: "green",  bar: "from-emerald-400 to-emerald-500" };
-  if (pct >= 40) return { label: "Progressing", tone: "orange", bar: "from-yellow-400 to-amber-400"    };
-  return           { label: "Needs focus",      tone: "red",    bar: "from-red-400 to-rose-500"        };
+  if (pct >= 70) return { labelKey: "mastery_strong",      tone: "green",  bar: "from-emerald-400 to-emerald-500" };
+  if (pct >= 40) return { labelKey: "mastery_progressing", tone: "orange", bar: "from-yellow-400 to-amber-400"    };
+  return           { labelKey: "mastery_needs_focus",      tone: "red",    bar: "from-red-400 to-rose-500"        };
 }
 
 function accColor(pct) {
@@ -138,6 +138,14 @@ export default function Reports() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
+  // AI recommendation block — populated after report loads.
+  const [aiRec,    setAiRec]    = useState("");
+  const [aiLoad,   setAiLoad]   = useState(false);
+  const [aiError,  setAiError]  = useState(null);
+
+  // "Copy as text" UX
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (!activeChildId) return;
     setLoading(true);
@@ -149,10 +157,41 @@ export default function Reports() {
       getChildReport(activeChildId),
       getTimeTrend(activeChildId).catch(() => ({ days: [] })),
     ])
-      .then(([r, t]) => { setReport(r); setTrend(t); })
+      .then(([r, tr]) => { setReport(r); setTrend(tr); })
       .catch(() => setError("Failed to load report. Please check your connection."))
       .finally(() => setLoading(false));
   }, [activeChildId]);
+
+  // Auto-fetch AI recommendation once the report is loaded. Re-runs if the
+  // active child changes. Failures are non-fatal — the rest of the page still
+  // works.
+  useEffect(() => {
+    if (!report || !activeChildId) return;
+    setAiLoad(true);
+    setAiError(null);
+    setAiRec("");
+
+    const prompt =
+      "You're writing the 'Recommendation' section of a printed parent report card. " +
+      "Based on the child context I'm providing in the system prompt, write 2-3 short " +
+      "paragraphs (~150 words total) covering: " +
+      "(1) what's working well — quote one specific subject or accuracy number; " +
+      "(2) the single biggest focus area for this coming week — quote a real wrong-answer " +
+      "pattern or low-mastery subject; " +
+      "(3) one concrete action the parent can take this week that respects the time " +
+      "controls already in effect. " +
+      "Tone: warm, specific, action-oriented. No greeting, no sign-off — just the body " +
+      "of the recommendation as it should appear on the printed page. Don't restate " +
+      "every stat, the parent already sees them. No markdown.";
+
+    askAI({
+      messages: [{ role: "user", content: prompt }],
+      childId: activeChildId,
+    })
+      .then(({ reply }) => setAiRec((reply || "").trim()))
+      .catch((err) => setAiError(err?.message || "Couldn't generate recommendation."))
+      .finally(() => setAiLoad(false));
+  }, [report, activeChildId]);
 
   const child      = report?.child ?? activeChild;
   const subjects   = report?.subjects ?? [];
@@ -210,6 +249,93 @@ export default function Reports() {
     else                 document.body.classList.remove("print-dark");
     // give the class one frame to apply before the dialog opens
     requestAnimationFrame(() => window.print());
+  }
+
+  // Build a plain-text version of the whole report (narrative + KPIs +
+  // scorecard + AI recommendation + mistakes + sessions). Returned as a
+  // single newline-joined string; ready for clipboard or .txt download.
+  function buildTextReport() {
+    if (!report) return "";
+    const lines = [];
+    const child = report.child || {};
+    const sum   = report.summary || {};
+
+    lines.push("══════════════════════════════════════════════════════════");
+    lines.push(`  ${t("reports_title").toUpperCase()} — ${child.displayName || "—"}`);
+    lines.push("══════════════════════════════════════════════════════════");
+    lines.push("");
+    lines.push(`${t("cover_generated")}: ${new Date().toLocaleDateString()}`);
+    if (child.createdAt)         lines.push(`${t("cover_account_since")}: ${shortDate(child.createdAt)}`);
+    if (sum.lastActivityAt)      lines.push(`${t("cover_last_active")}: ${fmtAgo(sum.lastActivityAt)}`);
+    lines.push("");
+    lines.push(narrative || "");
+    lines.push("");
+
+    lines.push("──── KPIs ────");
+    lines.push(`${t("kpi_coins")}: ${child.coins ?? 0}`);
+    lines.push(`${t("kpi_play_time")}: ${formatTime(sum.totalPlayTimeSec)}`);
+    lines.push(`${t("kpi_sessions")}: ${sum.totalSessions ?? 0}`);
+    lines.push(`${t("kpi_accuracy")}: ${aggAcc ? `${aggAcc.pct}% (${aggAcc.correct}/${aggAcc.total})` : "—"}`);
+    lines.push(`${t("kpi_avg_mastery")}: ${Math.round(sum.averageCompletion ?? 0)}%`);
+    if (bestRun)                 lines.push(`${t("kpi_best_score")}: ${bestRun.score}${bestRun.maxScore ? "/" + bestRun.maxScore : ""}${bestRun.subjectName ? " · " + bestRun.subjectName : ""}`);
+    if (sum.mostPlayedSubject)   lines.push(`${t("kpi_top_subject")}: ${sum.mostPlayedSubject}`);
+    lines.push("");
+
+    if (subjects.length) {
+      lines.push(`──── ${t("section_scorecard").toUpperCase()} ────`);
+      for (const s of masteryRank) {
+        const pct = Math.round(s.completion || 0);
+        const acc = s.accuracyPct != null ? ` · ${t("kpi_accuracy")} ${s.accuracyPct}%` : "";
+        const tm  = ` · ${formatTime(s.totalTimeSpentSec)}`;
+        const sess = ` · ${s.sessionsCount} ${t("sessions")}`;
+        lines.push(`  ${s.subjectName}: ${pct}% ${t("kpi_label_mastery")}${acc}${tm}${sess}`);
+      }
+      lines.push("");
+    }
+
+    if (aiRec) {
+      lines.push("──── AI RECOMMENDATION ────");
+      lines.push(aiRec);
+      lines.push("");
+    }
+
+    if (hotspots.length) {
+      lines.push(`──── ${t("section_mistakes").toUpperCase()} ────`);
+      for (const h of hotspots) {
+        lines.push(`  · "${h.question}" ×${h.count}${h.correctAnswer ? ` → ${h.correctAnswer}` : ""}`);
+      }
+      lines.push("");
+    }
+
+    if (sessions.length) {
+      lines.push(`──── ${t("section_recent").toUpperCase()} ────`);
+      for (const s of sessions.slice(0, 10)) {
+        lines.push(`  ${fmtAgo(s.endedAt)} · ${s.subjectName || "—"} · ${formatTime(s.durationSec)}`);
+      }
+      lines.push("");
+    }
+
+    lines.push("──────────────────────────────────────────────────────────");
+    lines.push("  NeuroQuest · neuroquest.tech");
+    return lines.join("\n");
+  }
+
+  async function copyAsText() {
+    const text = buildTextReport();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // fallback: download as file
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `neuroquest-report-${(child?.displayName || "child").replace(/\s+/g, "_")}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 
   return (
@@ -350,6 +476,19 @@ export default function Reports() {
           </div>
 
           <button
+            onClick={copyAsText}
+            disabled={!report}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl
+                       border border-white/15 bg-white/8 hover:bg-white/15 disabled:opacity-40
+                       font-semibold text-sm transition-colors"
+            title="Copy the whole report as plain text (falls back to .txt download)"
+          >
+            {copied
+              ? <><Check className="h-4 w-4 text-emerald-400" /> Copied</>
+              : <><FileText className="h-4 w-4 opacity-80" /> Text report</>}
+          </button>
+
+          <button
             onClick={() => handlePrint()}
             disabled={!report}
             className="flex items-center gap-2 px-4 py-2 rounded-xl
@@ -407,9 +546,9 @@ export default function Reports() {
                   {child?.displayName ?? "—"}
                 </h2>
                 <div className="text-xs opacity-60 flex flex-wrap gap-x-3 gap-y-1 pt-1">
-                  <span>Generated {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>
-                  {child?.createdAt && <span>· Account since {shortDate(child.createdAt)}</span>}
-                  {summary.lastActivityAt && <span>· Last active {fmtAgo(summary.lastActivityAt)}</span>}
+                  <span>{t("cover_generated")} {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>
+                  {child?.createdAt && <span>· {t("cover_account_since")} {shortDate(child.createdAt)}</span>}
+                  {summary.lastActivityAt && <span>· {t("cover_last_active")} {fmtAgo(summary.lastActivityAt)}</span>}
                 </div>
               </div>
               <div className="flex items-start gap-4 sm:gap-5 flex-wrap justify-start sm:justify-end w-full sm:w-auto">
@@ -419,13 +558,13 @@ export default function Reports() {
                     <CoinsIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     {child?.coins ?? 0}
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Coin balance</div>
+                  <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">{t("coin_balance")}</div>
                 </div>
                 {aggAcc && (
                   <div className="text-left sm:text-right">
                     <div className={`text-2xl sm:text-3xl font-black ${accColor(aggAcc.pct)}`}>{aggAcc.pct}%</div>
-                    <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Overall accuracy</div>
-                    <div className="text-[10px] opacity-50 mt-0.5">{aggAcc.correct} / {aggAcc.total} answered</div>
+                    <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">{t("overall_accuracy")}</div>
+                    <div className="text-[10px] opacity-50 mt-0.5">{aggAcc.correct} / {aggAcc.total} {t("answered")}</div>
                   </div>
                 )}
               </div>
@@ -440,14 +579,39 @@ export default function Reports() {
 
           {/* KPI strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 print-avoid-break">
-            <KPI icon={CoinsIcon}  label="Coins"          value={String(child?.coins ?? 0)}              tone="text-yellow-400" />
-            <KPI icon={Clock}      label="Play time"      value={formatTime(summary.totalPlayTimeSec)} />
-            <KPI icon={Activity}   label="Sessions"       value={String(summary.totalSessions ?? 0)} />
-            <KPI icon={Target}     label="Accuracy"       value={aggAcc ? `${aggAcc.pct}%` : "—"} />
-            <KPI icon={TrendingUp} label="Avg mastery"    value={`${Math.round(summary.averageCompletion ?? 0)}%`} />
-            <KPI icon={Award}      label="Best score"     value={bestRun ? `${bestRun.score}${bestRun.maxScore ? "/" + bestRun.maxScore : ""}` : "—"}
-                                   sub={bestRun?.subjectName || (bestRun ? "Game" : null)} />
-            <KPI icon={Trophy}     label="Top subject"    value={summary.mostPlayedSubject ?? "—"} />
+            <KPI icon={CoinsIcon}  label={t("kpi_coins")}        value={String(child?.coins ?? 0)}              tone="text-yellow-400" />
+            <KPI icon={Clock}      label={t("kpi_play_time")}    value={formatTime(summary.totalPlayTimeSec)} />
+            <KPI icon={Activity}   label={t("kpi_sessions")}     value={String(summary.totalSessions ?? 0)} />
+            <KPI icon={Target}     label={t("kpi_accuracy")}     value={aggAcc ? `${aggAcc.pct}%` : "—"} />
+            <KPI icon={TrendingUp} label={t("kpi_avg_mastery")}  value={`${Math.round(summary.averageCompletion ?? 0)}%`} />
+            <KPI icon={Award}      label={t("kpi_best_score")}   value={bestRun ? `${bestRun.score}${bestRun.maxScore ? "/" + bestRun.maxScore : ""}` : "—"}
+                                   sub={bestRun?.subjectName || null} />
+            <KPI icon={Trophy}     label={t("kpi_top_subject")}  value={summary.mostPlayedSubject ?? "—"} />
+          </div>
+
+          {/* AI Recommendation — appears in print output too */}
+          <div className="panel stroke rounded-2xl p-5 print-avoid-break">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="text-sm font-bold text-main flex items-center gap-2">
+                <Bot className="h-4 w-4 opacity-70" />
+                AI Recommendation
+              </div>
+              {aiLoad && <span className="text-xs opacity-60">Generating…</span>}
+            </div>
+
+            {aiError && (
+              <p className="mt-3 text-sm text-red-400">{aiError}</p>
+            )}
+
+            {!aiError && (
+              <div className="mt-3 text-sm leading-relaxed whitespace-pre-wrap text-secondary">
+                {aiRec
+                  ? aiRec
+                  : aiLoad
+                    ? <span className="opacity-50 italic">Pulling insights from {child?.displayName ?? "the child"}'s recent activity…</span>
+                    : <span className="opacity-50 italic">No recommendation generated yet.</span>}
+              </div>
+            )}
           </div>
 
           {/* 7-day activity — last section on Page 1 */}
@@ -456,7 +620,7 @@ export default function Reports() {
               <div>
                 <div className="text-sm font-bold text-main flex items-center gap-2">
                   <Calendar className="h-4 w-4 opacity-70" />
-                  7-day activity
+                  {t("section_7day")}
                 </div>
                 <div className="text-xs text-muted mt-0.5">Daily play time across all subjects</div>
               </div>
@@ -503,7 +667,7 @@ export default function Reports() {
           <div className="panel stroke rounded-2xl p-5 print-avoid-break print-break-after">
             <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
               <BookOpen className="h-4 w-4 opacity-70" />
-              Subject scorecard
+              {t("section_scorecard")}
             </div>
             <div className="text-xs text-muted">Mastery, accuracy, time, and best score per subject</div>
 
@@ -529,13 +693,13 @@ export default function Reports() {
                             {s.lastPlayedAt && <> · last {fmtAgo(s.lastPlayedAt)}</>}
                           </div>
                         </div>
-                        <Badge tone={status.tone}>{status.label}</Badge>
+                        <Badge tone={status.tone}>{t(status.labelKey)}</Badge>
                       </div>
 
                       {/* Mastery bar */}
                       <div>
                         <div className="flex items-center justify-between text-[11px] opacity-60 mb-1">
-                          <span>Mastery</span>
+                          <span>{t("kpi_label_mastery")}</span>
                           <span className="font-extrabold opacity-90">{pct}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-white/10 overflow-hidden">
@@ -550,13 +714,13 @@ export default function Reports() {
 
                       {/* Stat row */}
                       <div className="grid grid-cols-3 gap-2 pt-1">
-                        <Stat label="Accuracy"
+                        <Stat label={t("kpi_accuracy")}
                               value={s.accuracyPct != null ? `${s.accuracyPct}%` : "—"}
                               sub={s.answersTotal ? `${s.answersCorrect}/${s.answersTotal}` : null}
                               tone={accColor(s.accuracyPct)} />
-                        <Stat label="Best score"
+                        <Stat label={t("kpi_best_score")}
                               value={s.bestScore != null ? String(s.bestScore) : "—"} />
-                        <Stat label="Time"
+                        <Stat label={t("kpi_label_time")}
                               value={formatTime(s.totalTimeSpentSec)} />
                       </div>
                     </div>
@@ -573,7 +737,7 @@ export default function Reports() {
             <div className="panel stroke rounded-2xl p-5 print-avoid-break">
               <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
                 <ListChecks className="h-4 w-4 opacity-70" />
-                Common mistakes
+                {t("section_mistakes")}
               </div>
               <div className="text-xs text-muted">
                 Questions that came up wrong more than once recently
@@ -613,7 +777,7 @@ export default function Reports() {
             <div className="panel stroke rounded-2xl p-5 print-avoid-break">
               <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
                 <Star className="h-4 w-4 opacity-70" />
-                Strengths & focus
+                {t("section_strengths")}
               </div>
               <div className="text-xs text-muted">
                 Where to celebrate and where to put extra practice next week
@@ -671,7 +835,7 @@ export default function Reports() {
           <div className="panel stroke rounded-2xl p-5 print-avoid-break">
             <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
               <Activity className="h-4 w-4 opacity-70" />
-              Recent sessions
+              {t("section_recent")}
             </div>
             <div className="text-xs text-muted">Last {Math.min(sessions.length, 10)} play sessions</div>
 
@@ -682,10 +846,10 @@ export default function Reports() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-[11px] uppercase tracking-wider opacity-50 border-b border-white/10">
-                      <th className="py-2 pr-3 font-semibold">When</th>
-                      <th className="py-2 pr-3 font-semibold">Subject</th>
-                      <th className="py-2 pr-3 font-semibold">Duration</th>
-                      <th className="py-2 pr-3 font-semibold">Completion</th>
+                      <th className="py-2 pr-3 font-semibold">{t("th_when")}</th>
+                      <th className="py-2 pr-3 font-semibold">{t("th_subject")}</th>
+                      <th className="py-2 pr-3 font-semibold">{t("th_duration")}</th>
+                      <th className="py-2 pr-3 font-semibold">{t("th_completion")}</th>
                     </tr>
                   </thead>
                   <tbody>

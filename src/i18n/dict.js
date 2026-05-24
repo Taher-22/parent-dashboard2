@@ -225,6 +225,57 @@ export const STRINGS = {
     forgot_email:          "Email address",
     btn_continue:          "Continue",
     or_with_demo:          "or use the demo account",
+
+    // Reports — KPI tile labels
+    kpi_label_time:        "Time",
+    kpi_label_mastery:     "Mastery",
+
+    // Reports — table headers
+    th_when:               "When",
+    th_subject:            "Subject",
+    th_duration:           "Duration",
+    th_completion:         "Completion",
+
+    // Reports — common
+    print_avoid_break:     "",   // placeholder, unused
+    cover_generated:       "Generated",
+    cover_account_since:   "Account since",
+    cover_last_active:     "Last active",
+    answered:              "answered",
+
+    // Time control form
+    tc_daily_limit:        "Daily limit",
+    tc_session_length:     "Session length",
+    tc_break_length:       "Break length",
+    tc_allowed_window:     "Allowed window",
+    tc_bedtime_block:      "Bedtime block",
+    tc_from:               "From",
+    tc_to:                 "To",
+    tc_minutes_per_day:    "Minutes per day",
+    tc_per_session:        "Per session",
+    tc_per_break:          "Per break",
+    tc_save:               "Save changes",
+    tc_reset:              "Reset",
+
+    // Topbar
+    topbar_child:          "Child",
+    topbar_playing:        "Playing",
+    topbar_in_game:        "In game",
+    topbar_in_main_menu:   "In Main Menu",
+
+    // Subject Details extras
+    sd_back:               "Back to subjects",
+    sd_no_score_data:      "No scores recorded yet for this subject.",
+    sd_overall:            "Overall",
+    sd_completion:         "Completion",
+    sd_time_total:         "Time total",
+    sd_sessions_count:     "Sessions",
+
+    // Answers row
+    ar_question:           "Question",
+    ar_answered_label:     "Player answered",
+    ar_correct_label:      "Correct was",
+    ar_no_answer:          "No answer given",
   },
 
   /* =========================
@@ -425,5 +476,48 @@ export const STRINGS = {
     forgot_email:          "البريد الإلكتروني",
     btn_continue:          "متابعة",
     or_with_demo:          "أو استخدم الحساب التجريبي",
+
+    kpi_label_time:        "الوقت",
+    kpi_label_mastery:     "الإتقان",
+
+    th_when:               "متى",
+    th_subject:            "المادة",
+    th_duration:           "المدة",
+    th_completion:         "الإنجاز",
+
+    cover_generated:       "تم الإنشاء",
+    cover_account_since:   "تاريخ الإنضمام",
+    cover_last_active:     "آخر نشاط",
+    answered:              "تمت الإجابة",
+
+    tc_daily_limit:        "الحد اليومي",
+    tc_session_length:     "مدة الجلسة",
+    tc_break_length:       "مدة الاستراحة",
+    tc_allowed_window:     "نافذة السماح",
+    tc_bedtime_block:      "حظر النوم",
+    tc_from:               "من",
+    tc_to:                 "إلى",
+    tc_minutes_per_day:    "الدقائق في اليوم",
+    tc_per_session:        "في الجلسة",
+    tc_per_break:          "في الاستراحة",
+    tc_save:               "حفظ التغييرات",
+    tc_reset:              "إعادة تعيين",
+
+    topbar_child:          "الطفل",
+    topbar_playing:        "يلعب",
+    topbar_in_game:        "داخل اللعبة",
+    topbar_in_main_menu:   "في القائمة الرئيسية",
+
+    sd_back:               "العودة إلى المواد",
+    sd_no_score_data:      "لم تُسجَّل أي درجات لهذه المادة بعد.",
+    sd_overall:            "إجمالي",
+    sd_completion:         "الإنجاز",
+    sd_time_total:         "إجمالي الوقت",
+    sd_sessions_count:     "الجلسات",
+
+    ar_question:           "السؤال",
+    ar_answered_label:     "إجابة الطفل",
+    ar_correct_label:      "الإجابة الصحيحة",
+    ar_no_answer:          "لم يجب",
   },
 };
