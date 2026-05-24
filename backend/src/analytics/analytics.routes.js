@@ -45,37 +45,23 @@ function clientIp(req) {
 }
 
 /**
- * Auto-detecting admin check.
- *  1. If the caller's email is in ADMIN_EMAILS env var (CSV), they're admin.
- *  2. If ADMIN_EMAILS is unset OR the caller is the FIRST-EVER parent created
- *     on this deployment, they're admin too. This means the very first user
- *     to sign up automatically owns the dashboard without any env setup.
+ * Strict admin check: ONLY emails listed in the ADMIN_EMAILS env var
+ * (comma-separated, case-insensitive) can view analytics. Everyone else
+ * is denied — including the first-registered parent and including anyone
+ * if ADMIN_EMAILS is empty.
+ *
+ * On Railway: set ADMIN_EMAILS to e.g. "nasrrtm@gmail.com,team@example.com".
+ * If unset, NO ONE is admin (page returns 403 for everybody).
  */
-async function isAdminUser({ parentId, email }) {
-  // 1) Explicit allowlist
+function isAdminUser({ email }) {
+  if (!email) return false;
   const raw = (process.env.ADMIN_EMAILS || "").trim();
-  if (raw && email) {
-    const allow = raw
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    if (allow.includes(email.toLowerCase())) return true;
-  }
-
-  // 2) Auto-detect: first parent ever registered is the owner
-  if (parentId) {
-    const firstParent = await prisma.parent.findFirst({
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    });
-    if (firstParent?.id === parentId) return true;
-  }
-
-  // 3) If ADMIN_EMAILS is unset AND no other matches, allow any logged-in
-  //    parent (small private deployment — safer than locking everyone out).
-  if (!raw) return true;
-
-  return false;
+  if (!raw) return false;                  // empty allowlist = nobody admin
+  const allow = raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return allow.includes(email.toLowerCase());
 }
 
 function clip(value, max) {
@@ -170,7 +156,7 @@ router.get("/summary", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!(await isAdminUser({ parentId: req.user.id, email: parent?.email }))) {
+  if (!isAdminUser({ email: parent?.email })) {
     return res.status(403).json({ error: "Not authorized" });
   }
 
@@ -313,7 +299,7 @@ router.get("/users", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+  if (!isAdminUser({ email: me?.email })) {
     return res.status(403).json({ error: "Not authorized" });
   }
 
@@ -355,7 +341,7 @@ router.get("/user/:parentId", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+  if (!isAdminUser({ email: me?.email })) {
     return res.status(403).json({ error: "Not authorized" });
   }
 
@@ -412,7 +398,7 @@ router.get("/children", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+  if (!isAdminUser({ email: me?.email })) {
     return res.status(403).json({ error: "Not authorized" });
   }
 
@@ -466,7 +452,7 @@ router.get("/child/:childId", requireAuth, async (req, res) => {
     where:  { id: req.user.id },
     select: { email: true },
   });
-  if (!(await isAdminUser({ parentId: req.user.id, email: me?.email }))) {
+  if (!isAdminUser({ email: me?.email })) {
     return res.status(403).json({ error: "Not authorized" });
   }
 

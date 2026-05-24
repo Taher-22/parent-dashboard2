@@ -37,27 +37,17 @@ app.use("/api/game",      gameRoutes);
 app.use("/api/ai",        aiRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Auto-detect admin: allowlist via ADMIN_EMAILS env var, plus the
-// first-ever-created parent (the owner), plus all-logged-in when no
-// allowlist is configured. Mirrors analytics.routes.js.
-async function isAdminUser({ parentId, email }) {
+// Strict admin check — ONLY emails in the ADMIN_EMAILS env var (CSV,
+// case-insensitive) are admin. If ADMIN_EMAILS is empty, NO ONE is admin.
+function isAdminUser({ email }) {
+  if (!email) return false;
   const raw = (process.env.ADMIN_EMAILS || "").trim();
-  if (raw && email) {
-    const allow = raw
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    if (allow.includes(email.toLowerCase())) return true;
-  }
-  if (parentId) {
-    const firstParent = await prisma.parent.findFirst({
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    });
-    if (firstParent?.id === parentId) return true;
-  }
-  if (!raw) return true;
-  return false;
+  if (!raw) return false;
+  const allow = raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return allow.includes(email.toLowerCase());
 }
 
 app.get("/api/me", requireAuth, async (req, res) => {
@@ -66,8 +56,7 @@ app.get("/api/me", requireAuth, async (req, res) => {
     select: { id: true, email: true, role: true, name: true, birthdate: true, createdAt: true },
   });
   if (!parent) return res.status(404).json({ error: "User not found" });
-  const isAdmin = await isAdminUser({ parentId: parent.id, email: parent.email });
-  res.json({ ...parent, isAdmin });
+  res.json({ ...parent, isAdmin: isAdminUser({ email: parent.email }) });
 });
 
 const PORT = process.env.PORT || 8080;
