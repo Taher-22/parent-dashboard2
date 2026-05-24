@@ -162,7 +162,7 @@ export default function SpecialShell() {
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     className={`relative px-3 py-2 rounded-xl flex items-center gap-1.5 font-semibold text-sm whitespace-nowrap ${
-                      isActive ? "text-white" : "opacity-55 hover:opacity-100"
+                      isActive ? "active-shine" : "opacity-55 hover:opacity-100"
                     }`}
                   >
                     {isActive && (

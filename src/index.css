@@ -408,10 +408,20 @@
    a dark purple so the selected item is unmistakably highlighted.
 ===================================================== */
 
-/* Active text — pale fuchsia/100/200 → deep purple in light mode */
-[data-theme="light"] .text-fuchsia-100 { color: #581c87 !important; }   /* purple-900 */
-[data-theme="light"] .text-fuchsia-200 { color: #6b21a8 !important; }   /* purple-800 */
-[data-theme="light"] .text-fuchsia-300 { color: #7e22ce !important; }   /* purple-700 */
+/* Active text — pale fuchsia/100/200 → deep purple + shine in light mode */
+[data-theme="light"] .text-fuchsia-100,
+[data-theme="light"] .text-fuchsia-200 {
+  color: #3b0764 !important;                /* near-black violet, pops on white */
+  font-weight: 800 !important;
+  text-shadow:
+    0 0 14px rgba(192, 132, 252, 0.50),
+    0 0 4px  rgba(255, 255, 255, 0.95),
+    0 1px 0  rgba(255, 255, 255, 0.7);
+}
+[data-theme="light"] .text-fuchsia-300 { color: #6b21a8 !important; font-weight: 700 !important; }
+/* Icons riding alongside the active text inherit the same dark color */
+[data-theme="light"] .text-fuchsia-100 svg,
+[data-theme="light"] .text-fuchsia-200 svg { color: #3b0764 !important; }
 
 /* Saturate the tinted backgrounds so active surfaces stand out */
 [data-theme="light"] .bg-fuchsia-500\/10 { background-color: rgba(168, 85, 247, 0.18) !important; }
@@ -443,6 +453,40 @@
 [data-theme="light"] .border-fuchsia-500\/25,
 [data-theme="light"] .border-fuchsia-500\/30,
 [data-theme="light"] .border-fuchsia-500\/40 { border-color: rgba(126, 34, 206, 0.55) !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   .active-shine — applied to TEXT inside an active tab/nav/button.
+   Default (dark/special themes): bright white.
+   Light theme: deep purple with a soft glow + white halo so the
+   selected item literally shines on the pastel background.
+───────────────────────────────────────────────────────────────── */
+.active-shine {
+  color: #ffffff;
+  font-weight: 700;
+}
+[data-theme="light"] .active-shine {
+  color: #3b0764 !important;            /* near-black violet */
+  font-weight: 800 !important;
+  text-shadow:
+    0 0 14px rgba(192, 132, 252, 0.55),  /* purple aura */
+    0 0 4px  rgba(255, 255, 255, 0.95),  /* white halo */
+    0 1px 0  rgba(255, 255, 255, 0.7);   /* highlight */
+}
+/* Icons inside an active row get the same darkened color in light mode */
+[data-theme="light"] .active-shine svg { color: #3b0764 !important; }
+
+/* Bonus: in light mode, force the global text-white inside known active
+   pills (gradient backgrounds) to the same dark purple. Catches every
+   active NavLink even where the JSX still says text-white. */
+[data-theme="light"] .bg-gradient-to-r .text-white,
+[data-theme="light"] .bg-gradient-to-b .text-white {
+  color: #3b0764 !important;
+  font-weight: 800 !important;
+  text-shadow:
+    0 0 14px rgba(192, 132, 252, 0.55),
+    0 0 4px  rgba(255, 255, 255, 0.95),
+    0 1px 0  rgba(255, 255, 255, 0.7);
+}
 
 /* =====================================================
    MOBILE PERF
