@@ -392,18 +392,18 @@ export default function Reports() {
                   {summary.lastActivityAt && <span>· Last active {fmtAgo(summary.lastActivityAt)}</span>}
                 </div>
               </div>
-              <div className="flex items-start gap-5">
+              <div className="flex items-start gap-4 sm:gap-5 flex-wrap justify-start sm:justify-end w-full sm:w-auto">
                 {/* Coins badge — always visible so parent can see balance at a glance */}
-                <div className="text-right">
-                  <div className="text-3xl font-black text-yellow-400 flex items-center justify-end gap-1.5">
-                    <CoinsIcon className="h-6 w-6" />
+                <div className="text-left sm:text-right">
+                  <div className="text-2xl sm:text-3xl font-black text-yellow-400 flex items-center sm:justify-end gap-1.5">
+                    <CoinsIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     {child?.coins ?? 0}
                   </div>
                   <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Coin balance</div>
                 </div>
                 {aggAcc && (
-                  <div className="text-right">
-                    <div className={`text-3xl font-black ${accColor(aggAcc.pct)}`}>{aggAcc.pct}%</div>
+                  <div className="text-left sm:text-right">
+                    <div className={`text-2xl sm:text-3xl font-black ${accColor(aggAcc.pct)}`}>{aggAcc.pct}%</div>
                     <div className="text-[10px] uppercase tracking-widest opacity-60 font-bold">Overall accuracy</div>
                     <div className="text-[10px] opacity-50 mt-0.5">{aggAcc.correct} / {aggAcc.total} answered</div>
                   </div>

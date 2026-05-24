@@ -101,7 +101,7 @@ export default function ChatPanel() {
         </div>
       </div>
 
-      <div ref={listRef} className="h-[420px] overflow-auto p-4 space-y-3">
+      <div ref={listRef} className="h-[55vh] sm:h-[420px] overflow-auto p-4 space-y-3">
         {messages.map((m, idx) => {
           const isUser = m.role === "user";
           return (
