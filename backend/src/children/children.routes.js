@@ -326,7 +326,7 @@ router.get("/:childId/reports", requireAuth, async (req, res) => {
     where: { childId, isCorrect: false },
     orderBy: { createdAt: "desc" },
     take: 20,
-    select: { id: true, subjectId: true, question: true, options: true, userAnswer: true, correctAnswer: true, createdAt: true },
+    select: { id: true, subjectId: true, question: true, options: true, userAnswer: true, correctAnswer: true, timedOut: true, createdAt: true },
   });
 
   // Recent score events (newest first, up to 20) + best score per subject.
@@ -481,7 +481,9 @@ router.get("/:childId/answers", requireAuth, async (req, res) => {
   const where = { childId };
   if (req.query.isCorrect === "true")  where.isCorrect = true;
   if (req.query.isCorrect === "false") where.isCorrect = false;
-  if (req.query.subjectId) where.subjectId = req.query.subjectId;
+  if (req.query.subjectId)             where.subjectId = req.query.subjectId;
+  if (req.query.timedOut === "true")   where.timedOut = true;
+  if (req.query.timedOut === "false")  where.timedOut = false;
 
   const [items, filteredTotal, totalAnswers, correctAnswers] = await Promise.all([
     prisma.answerRecord.findMany({
@@ -506,6 +508,7 @@ router.get("/:childId/answers", requireAuth, async (req, res) => {
       userAnswer: a.userAnswer,
       correctAnswer: a.correctAnswer,
       isCorrect: a.isCorrect,
+      timedOut: a.timedOut === true,
       createdAt: a.createdAt,
     })),
     total: filteredTotal,

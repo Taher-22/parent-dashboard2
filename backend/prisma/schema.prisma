@@ -169,6 +169,7 @@ model AnswerRecord {
   userAnswer    String?   @db.Text
   correctAnswer String?   @db.Text
   isCorrect     Boolean
+  timedOut      Boolean   @default(false)  // true → kid ran out of time before answering
 
   createdAt     DateTime @default(now())
 

@@ -154,6 +154,8 @@ export async function getChildAnswers(childId, options = {}) {
   if (options.offset != null) params.set("offset", String(options.offset));
   if (options.isCorrect === true)  params.set("isCorrect", "true");
   if (options.isCorrect === false) params.set("isCorrect", "false");
+  if (options.timedOut  === true)  params.set("timedOut",  "true");
+  if (options.timedOut  === false) params.set("timedOut",  "false");
   if (options.subjectId) params.set("subjectId", options.subjectId);
   const qs = params.toString();
   return request(`/api/children/${childId}/answers${qs ? `?${qs}` : ""}`, {

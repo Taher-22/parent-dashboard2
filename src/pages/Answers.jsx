@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Filter, ListChecks, ChevronDown } from "lucide-react";
+import { CheckCircle2, XCircle, Filter, ListChecks, ChevronDown, TimerOff } from "lucide-react";
 
 import { useChildren } from "../state/ChildrenContext.jsx";
 import { getChildAnswers } from "../lib/api.js";
 
 const FILTERS = [
-  { id: "all",     label: "All",     value: undefined },
-  { id: "wrong",   label: "Wrong",   value: false     },
-  { id: "correct", label: "Correct", value: true      },
+  { id: "all",      label: "All",       value: undefined },
+  { id: "wrong",    label: "Wrong",     value: false     },
+  { id: "correct",  label: "Correct",   value: true      },
+  { id: "timedout", label: "Timed Out", value: undefined, timedOut: true },
 ];
 
 const PAGE_SIZE = 50;
@@ -47,11 +48,12 @@ export default function Answers() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const isCorrect = FILTERS.find((f) => f.id === filter)?.value;
+    const filterDef = FILTERS.find((f) => f.id === filter);
     getChildAnswers(activeChild.id, {
       limit: PAGE_SIZE,
       offset,
-      isCorrect,
+      isCorrect: filterDef?.value,
+      timedOut: filterDef?.timedOut,
       subjectId: subjectId || undefined,
     })
       .then((res) => { if (!cancelled) setData(res); })
@@ -126,23 +128,24 @@ export default function Answers() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-colors ${
-              filter === f.id
-                ? f.id === "wrong"
-                  ? "bg-red-500/15 border-red-500/40 text-red-300"
-                  : f.id === "correct"
-                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                    : "bg-white/15 border-white/30 text-white"
-                : "border-white/15 opacity-65 hover:opacity-100"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+        {FILTERS.map((f) => {
+          const active = filter === f.id;
+          let activeCls = "bg-white/15 border-white/30 text-white";
+          if (f.id === "wrong")    activeCls = "bg-red-500/15 border-red-500/40 text-red-300";
+          if (f.id === "correct")  activeCls = "bg-emerald-500/15 border-emerald-500/40 text-emerald-300";
+          if (f.id === "timedout") activeCls = "bg-amber-500/15 border-amber-500/40 text-amber-300";
+          return (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-colors ${
+                active ? activeCls : "border-white/15 opacity-65 hover:opacity-100"
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
 
         {subjectOptions.length > 0 && (
           <div className="relative">
@@ -227,19 +230,31 @@ function StatChip({ label, value, tone, icon: Icon }) {
 }
 
 function AnswerRow({ a, index }) {
-  const Icon = a.isCorrect ? CheckCircle2 : XCircle;
+  const timedOut = a.timedOut === true;
+  const Icon = a.isCorrect ? CheckCircle2 : (timedOut ? TimerOff : XCircle);
+
+  // Card frame color: amber for timed-out, green for correct, red for plain wrong.
+  let borderCls;
+  let iconColorCls;
+  if (a.isCorrect) {
+    borderCls = "border-emerald-500/20 bg-emerald-500/[0.04]";
+    iconColorCls = "text-emerald-400";
+  } else if (timedOut) {
+    borderCls = "border-amber-500/25 bg-amber-500/[0.06]";
+    iconColorCls = "text-amber-400";
+  } else {
+    borderCls = "border-red-500/25 bg-red-500/[0.06]";
+    iconColorCls = "text-red-400";
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, delay: Math.min(index * 0.015, 0.25) }}
-      className={`rounded-xl border p-3 md:p-4 flex items-start gap-3 ${
-        a.isCorrect
-          ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-          : "border-red-500/25 bg-red-500/[0.06]"
-      }`}
+      className={`rounded-xl border p-3 md:p-4 flex items-start gap-3 ${borderCls}`}
     >
-      <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${a.isCorrect ? "text-emerald-400" : "text-red-400"}`} />
+      <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${iconColorCls}`} />
 
       <div className="flex-1 min-w-0 space-y-2">
         {/* Top row: subject + time */}
@@ -289,28 +304,37 @@ function AnswerRow({ a, index }) {
           </div>
         )}
 
-        {/* 3. What the player answered */}
-        {a.userAnswer != null && (
-          <div className="text-xs md:text-sm">
-            <span className="opacity-55">Player answered: </span>
-            <span className={`font-mono font-bold ${a.isCorrect ? "text-emerald-300" : "text-red-300"}`}>
-              {a.userAnswer}
-            </span>
-            {!a.isCorrect && a.correctAnswer != null && (
-              <>
-                <span className="opacity-55 ml-2">· Correct was </span>
-                <span className="font-mono font-bold text-emerald-300">{a.correctAnswer}</span>
-              </>
-            )}
-          </div>
+        {/* 3. What the player answered (or didn't, when timed out) */}
+        {timedOut ? (
+          a.correctAnswer != null && (
+            <div className="text-xs md:text-sm">
+              <span className="opacity-55">No answer given · Correct was </span>
+              <span className="font-mono font-bold text-emerald-300">{a.correctAnswer}</span>
+            </div>
+          )
+        ) : (
+          a.userAnswer != null && (
+            <div className="text-xs md:text-sm">
+              <span className="opacity-55">Player answered: </span>
+              <span className={`font-mono font-bold ${a.isCorrect ? "text-emerald-300" : "text-red-300"}`}>
+                {a.userAnswer}
+              </span>
+              {!a.isCorrect && a.correctAnswer != null && (
+                <>
+                  <span className="opacity-55 ml-2">· Correct was </span>
+                  <span className="font-mono font-bold text-emerald-300">{a.correctAnswer}</span>
+                </>
+              )}
+            </div>
+          )
         )}
 
-        {/* 4. Correct / wrong banner */}
+        {/* 4. Status banner */}
         <div className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest ${
-          a.isCorrect ? "text-emerald-300" : "text-red-300"
+          a.isCorrect ? "text-emerald-300" : (timedOut ? "text-amber-300" : "text-red-300")
         }`}>
           <Icon className="h-3.5 w-3.5" />
-          {a.isCorrect ? "Correct" : "Wrong"}
+          {a.isCorrect ? "Correct" : (timedOut ? "Timed Out" : "Wrong")}
         </div>
       </div>
     </motion.div>

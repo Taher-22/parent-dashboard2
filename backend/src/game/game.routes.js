@@ -257,11 +257,13 @@ router.patch("/messages/read", async (req, res) => {
  */
 router.post("/child/:childId/answer", async (req, res) => {
   const { childId } = req.params;
-  const { subjectId, question, options, userAnswer, correctAnswer, isCorrect } = req.body ?? {};
+  const { subjectId, question, options, userAnswer, correctAnswer, isCorrect, isTimedOut, timedOut } = req.body ?? {};
 
   if (typeof isCorrect !== "boolean") {
     return res.status(400).json({ error: "isCorrect (boolean) is required" });
   }
+
+  const tOut = isTimedOut === true || timedOut === true;
 
   const child = await prisma.child.findUnique({ where: { id: childId } });
   if (!child) return res.status(404).json({ error: "Child not found" });
@@ -290,6 +292,7 @@ router.post("/child/:childId/answer", async (req, res) => {
       userAnswer: userAnswer || null,
       correctAnswer: correctAnswer || null,
       isCorrect,
+      timedOut: tOut,
     },
   });
 
