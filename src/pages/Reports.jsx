@@ -217,22 +217,44 @@ export default function Reports() {
         @media print {
           @page { margin: 14mm 12mm; size: A4; }
 
-          /* Hide all chrome and unrelated content */
-          .no-print, nav, aside, header,
-          [data-print="hide"] { display: none !important; }
-          /* Visibility hack: hide everything, then re-show only the report */
-          body * { visibility: hidden; }
-          #report-printable, #report-printable * { visibility: visible; }
-          #report-printable {
-            position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0;
+          /* ── Hide the app chrome (sidebar, topbar, navs, decorative layers) */
+          nav, aside, header,
+          .shape, .grain,
+          .no-print, [data-print="hide"] { display: none !important; }
+
+          /* ── Strip styling from layout wrappers so the report owns the page */
+          html, body {
+            background: #fff !important;
+            min-height: 0 !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          #report-printable .print-break-before { break-before: page; page-break-before: always; }
-          #report-printable .print-avoid-break  { break-inside: avoid; page-break-inside: avoid; }
+          .adapted-bg, main {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            min-height: 0 !important;
+            max-width: none !important;
+          }
+          /* Collapse any grid/flex wrappers that previously held the sidebar */
+          .grid, .flex { display: block !important; }
+          /* But the report's own grids must keep being grids — re-enable them */
+          #report-printable .grid { display: grid !important; }
+          #report-printable .flex { display: flex !important; }
 
-          /* ── Default LIGHT print theme ──────────────────────────────── */
-          body:not(.print-dark), html:not(.print-dark) { background: #fff !important; color: #111 !important; }
+          /* ── Page-break rules ──────────────────────────────────────── */
+          #report-printable .print-break-before { break-before: page; page-break-before: always; }
+          #report-printable .print-break-after  { break-after:  page; page-break-after:  always; }
+          #report-printable .print-avoid-break  { break-inside: avoid; page-break-inside: avoid; }
+          /* A little breathing room at the top of each fresh page so the
+             content doesn't sit flush against the @page margin. */
+          #report-printable .print-break-after + * { margin-top: 0 !important; }
+
+          /* ── Default LIGHT print theme ─────────────────────────────── */
           body:not(.print-dark) #report-printable { color: #111 !important; background: #fff !important; }
           body:not(.print-dark) #report-printable .panel,
           body:not(.print-dark) #report-printable .stroke {
@@ -251,11 +273,8 @@ export default function Reports() {
           body:not(.print-dark) #report-printable .text-purple-400  { color: #6b21a8 !important; }
           body:not(.print-dark) #report-printable .bg-gradient-to-r { background-image: none !important; }
 
-          /* ── DARK print theme (opt-in via body.print-dark) ──────────── */
-          body.print-dark, html:has(body.print-dark) {
-            background: #0b1020 !important;
-            color: #e6e9f2 !important;
-          }
+          /* ── DARK print theme (opt-in via body.print-dark) ─────────── */
+          body.print-dark { background: #0b1020 !important; color: #e6e9f2 !important; }
           body.print-dark #report-printable { background: #0b1020 !important; color: #e6e9f2 !important; }
           body.print-dark #report-printable .panel,
           body.print-dark #report-printable .stroke {
@@ -275,7 +294,6 @@ export default function Reports() {
           body.print-dark #report-printable .text-rose-400    { color: #f87171 !important; }
           body.print-dark #report-printable .text-sky-400     { color: #38bdf8 !important; }
           body.print-dark #report-printable .text-purple-400  { color: #c084fc !important; }
-          /* Keep status-tinted backgrounds visible in dark print */
           body.print-dark #report-printable .bg-emerald-500\\/8,
           body.print-dark #report-printable .bg-yellow-500\\/8 { background: rgba(255,255,255,0.06) !important; }
         }
@@ -430,8 +448,8 @@ export default function Reports() {
             <KPI icon={Trophy}     label="Top subject"    value={summary.mostPlayedSubject ?? "—"} />
           </div>
 
-          {/* 7-day activity */}
-          <div className="panel stroke rounded-2xl p-5 print-avoid-break">
+          {/* 7-day activity — last section on Page 1 */}
+          <div className="panel stroke rounded-2xl p-5 print-avoid-break print-break-after">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <div className="text-sm font-bold text-main flex items-center gap-2">
@@ -479,8 +497,8 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* Subject scorecards */}
-          <div className="panel stroke rounded-2xl p-5 print-avoid-break">
+          {/* Subject scorecards — Page 2 */}
+          <div className="panel stroke rounded-2xl p-5 print-avoid-break print-break-after">
             <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
               <BookOpen className="h-4 w-4 opacity-70" />
               Subject scorecard
@@ -546,8 +564,8 @@ export default function Reports() {
             )}
           </div>
 
-          {/* Two-column: hotspots + strengths/focus */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5">
+          {/* Two-column: hotspots + strengths/focus — Page 3 */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-5 print-break-after">
 
             {/* Common mistakes hotspots */}
             <div className="panel stroke rounded-2xl p-5 print-avoid-break">
@@ -647,8 +665,8 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* Recent sessions */}
-          <div className="panel stroke rounded-2xl p-5 print-avoid-break print-break-before">
+          {/* Recent sessions — Page 4 (break supplied by the section above) */}
+          <div className="panel stroke rounded-2xl p-5 print-avoid-break">
             <div className="text-sm font-bold text-main flex items-center gap-2 mb-1">
               <Activity className="h-4 w-4 opacity-70" />
               Recent sessions
