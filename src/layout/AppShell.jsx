@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -8,6 +8,7 @@ import Topbar from "../ui/Topbar.jsx";
 import SpecialShell from "./SpecialShell.jsx";
 
 import { useTheme } from "../state/ThemeContext.jsx";
+import { trackPageview } from "../lib/analytics.js";
 
 import Login from "../pages/Login.jsx";
 import Register from "../pages/Register.jsx";
@@ -26,6 +27,12 @@ export default function AppShell() {
   const token = localStorage.getItem("token");
   const { theme } = useTheme();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Anonymous pageview tracking → posts to a Discord webhook.
+  // Honors Do Not Track + localStorage opt-out. Fire-and-forget.
+  useEffect(() => {
+    trackPageview(location.pathname, { isParent: !!token });
+  }, [location.pathname, token]);
 
   /* 🔒 NOT AUTHENTICATED */
   if (!token) {
