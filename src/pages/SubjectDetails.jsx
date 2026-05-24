@@ -8,13 +8,26 @@ import Card from "../ui/Card.jsx";
 import { useChildren } from "../state/ChildrenContext.jsx";
 import { getChildReport } from "../lib/api.js";
 
-// Friendly URL slug → backend subjectId. Only the games that ship coins+scores
-// today need entries here; non-math subjects fall through to the basic view.
+// Friendly URL slug → backend subjectId. Add new subjects here as they ship.
+// Whether the Coins/Scores panel actually renders is decided at runtime by
+// checking if any scores have been recorded for that subject — not by a
+// hardcoded allowlist.
 const SLUG_TO_SUBJECT_ID = {
-  math: "subj_math",
+  math:      "subj_math",
+  english:   "seed_s_english",
+  reading:   "seed_s_english",
+  science:   "seed_s_science",
+  astronomy: "seed_s_science",
+  minigames: "seed_s_minigames",
 };
 
-const SCORE_BG = ["subj_math"]; // subjects that surface coins/scores UI
+// Friendly display name for the subject section, by backend id.
+const SUBJECT_LABEL = {
+  subj_math:        "Math",
+  seed_s_english:   "English",
+  seed_s_science:   "Science",
+  seed_s_minigames: "Minigames",
+};
 
 function formatWhen(iso) {
   if (!iso) return "—";
@@ -35,14 +48,14 @@ export default function SubjectDetails() {
   const { activeChild, activeChildId } = useChildren();
 
   const backendSubjectId = SLUG_TO_SUBJECT_ID[slug] || null;
-  const isScoreSubject = backendSubjectId && SCORE_BG.includes(backendSubjectId);
+  const subjectLabel = SUBJECT_LABEL[backendSubjectId] || slug;
 
   const [report, setReport] = useState(null);
 
-  // Pull the report (only when we'll actually use its score data — saves a call
-  // for subjects that don't have coins/scores wired up yet)
+  // Pull the report whenever this subject view is open — even unmapped slugs
+  // get a fetch, since the report is also what decides if we have data to show.
   useEffect(() => {
-    if (!activeChildId || !isScoreSubject) { setReport(null); return; }
+    if (!activeChildId) { setReport(null); return; }
     let cancelled = false;
     async function fetchOnce() {
       try {
@@ -56,7 +69,7 @@ export default function SubjectDetails() {
       fetchOnce();
     }, 15000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [activeChildId, isScoreSubject]);
+  }, [activeChildId]);
 
   // Filter scores to just this subject's
   const subjectScores = (report?.recentScores || []).filter(
@@ -67,6 +80,10 @@ export default function SubjectDetails() {
   );
   const bestScore = subjectRow?.bestScore ?? null;
   const totalSubjectScore = subjectScores.reduce((sum, s) => sum + (s.score || 0), 0);
+
+  // Data-driven gate: only render the Coins/Scores panels if we actually have
+  // score records for this subject. Hide for subjects that have never had any.
+  const hasScoreData = bestScore != null || subjectScores.length > 0;
 
   return (
     <PageTransition>
@@ -79,57 +96,49 @@ export default function SubjectDetails() {
         </p>
       </div>
 
-      {/* ───────── COINS + SCORES (Math only) ───────── */}
-      {isScoreSubject && (
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Coin balance — currently a single child-wide value, mirrored here for math */}
-          <Card title="Coins">
-            <div className="flex items-end gap-2">
-              <CoinsIcon className="h-7 w-7 text-amber-400 mb-1.5" />
-              <span className="text-5xl font-black text-amber-400">
-                {activeChild?.coins ?? 0}
-              </span>
-              <span className="pb-2 opacity-70">coins</span>
-            </div>
-            <div className="text-[11px] opacity-55 mt-1">
-              Total balance — editable on Overview.
-            </div>
-          </Card>
+      {/* ───────── COINS + SCORES — shown only if this subject has score records ───────── */}
+      {hasScoreData && (
+        <>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card title="Coins">
+              <div className="flex items-end gap-2">
+                <CoinsIcon className="h-7 w-7 text-amber-400 mb-1.5" />
+                <span className="text-5xl font-black text-amber-400">
+                  {activeChild?.coins ?? 0}
+                </span>
+                <span className="pb-2 opacity-70">coins</span>
+              </div>
+              <div className="text-[11px] opacity-55 mt-1">
+                Total balance — editable on Overview.
+              </div>
+            </Card>
 
-          <Card title="Best Math Score">
-            <div className="flex items-end gap-2">
-              <Trophy className="h-7 w-7 text-yellow-300 mb-1.5" />
-              <span className="text-5xl font-black text-yellow-300">
-                {bestScore ?? "—"}
-              </span>
-            </div>
-            <div className="text-[11px] opacity-55 mt-1">
-              Highest single score recorded.
-            </div>
-          </Card>
+            <Card title={`Best ${subjectLabel} Score`}>
+              <div className="flex items-end gap-2">
+                <Trophy className="h-7 w-7 text-yellow-300 mb-1.5" />
+                <span className="text-5xl font-black text-yellow-300">
+                  {bestScore ?? "—"}
+                </span>
+              </div>
+              <div className="text-[11px] opacity-55 mt-1">
+                Highest single score recorded.
+              </div>
+            </Card>
 
-          <Card title="Total Math Score">
-            <div className="flex items-end gap-2">
-              <TrendingUp className="h-7 w-7 text-emerald-400 mb-1.5" />
-              <span className="text-5xl font-black text-emerald-400">
-                {totalSubjectScore}
-              </span>
-            </div>
-            <div className="text-[11px] opacity-55 mt-1">
-              Sum of the {subjectScores.length} most recent score{subjectScores.length === 1 ? "" : "s"}.
-            </div>
-          </Card>
-        </div>
-      )}
+            <Card title={`Total ${subjectLabel} Score`}>
+              <div className="flex items-end gap-2">
+                <TrendingUp className="h-7 w-7 text-emerald-400 mb-1.5" />
+                <span className="text-5xl font-black text-emerald-400">
+                  {totalSubjectScore}
+                </span>
+              </div>
+              <div className="text-[11px] opacity-55 mt-1">
+                Sum of the {subjectScores.length} most recent score{subjectScores.length === 1 ? "" : "s"}.
+              </div>
+            </Card>
+          </div>
 
-      {/* ───────── RECENT SCORES (Math only) ───────── */}
-      {isScoreSubject && (
-        <Card title="Recent Math Scores" className="mt-4">
-          {subjectScores.length === 0 ? (
-            <div className="text-sm opacity-65 py-2">
-              No scores recorded yet. They'll appear here as soon as a math run finishes.
-            </div>
-          ) : (
+          <Card title={`Recent ${subjectLabel} Scores`} className="mt-4">
             <div className="divide-y divide-white/5">
               {subjectScores.map((s, i) => (
                 <motion.div
@@ -159,8 +168,8 @@ export default function SubjectDetails() {
                 </motion.div>
               ))}
             </div>
-          )}
-        </Card>
+          </Card>
+        </>
       )}
 
       {/* ───────── GENERIC PANELS (every subject) ───────── */}
