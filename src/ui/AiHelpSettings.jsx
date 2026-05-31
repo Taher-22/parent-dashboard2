@@ -17,6 +17,7 @@ export default function AiHelpSettings() {
   const [enabled, setEnabled]     = useState(true);
   const [threshold, setThreshold] = useState(3);
   const [mode, setMode]           = useState("streak");
+  const [duration, setDuration]   = useState(15);
   const [loading, setLoading]     = useState(false);
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
@@ -37,6 +38,7 @@ export default function AiHelpSettings() {
         setEnabled(cfg.aiHelpEnabled);
         setThreshold(cfg.aiHelpThreshold);
         setMode(cfg.aiHelpMode);
+        if (cfg.aiHelpDurationSec != null) setDuration(cfg.aiHelpDurationSec);
       } catch (e) {
         if (alive) setError(e.message || "Failed to load settings");
       } finally {
@@ -63,6 +65,7 @@ export default function AiHelpSettings() {
         aiHelpEnabled: enabled,
         aiHelpThreshold: Number(threshold),
         aiHelpMode: mode,
+        aiHelpDurationSec: Number(duration),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -164,6 +167,22 @@ export default function AiHelpSettings() {
                   {mode === "streak"
                     ? `The game offers a hint after ${threshold} wrong answer${threshold > 1 ? "s" : ""} in a row (the counter resets when they answer correctly).`
                     : `The game offers a hint after ${threshold} wrong answer${threshold > 1 ? "s" : ""} in a single play session.`}
+                </p>
+              </div>
+
+              {/* Display duration */}
+              <div className={enabled ? "" : "opacity-40 pointer-events-none"}>
+                <div className="text-sm font-semibold mb-1">Keep the hint on screen for (seconds)</div>
+                <input
+                  type="number"
+                  min={3}
+                  max={120}
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="w-24 rounded-xl p-2 bg-black/5 dark:bg-white/8 border border-white/10 text-sm outline-none focus:border-emerald-500/50"
+                />
+                <p className="text-xs opacity-60 mt-1.5">
+                  How long the hint message stays visible in the game before it fades (3–120s).
                 </p>
               </div>
 

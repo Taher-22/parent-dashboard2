@@ -68,19 +68,20 @@ export async function generateChildHint({
       : "";
 
   const system = `You are a warm, encouraging tutor speaking directly to a young child named ${name} who is playing an educational game.
-The child has just gotten this kind of question wrong a few times and needs a gentle hand.
+The child has just gotten this specific question wrong a few times and needs help.
 Rules:
 - Talk TO the child, simply and kindly. Short sentences. 2-4 sentences max.
-- Do NOT state the final answer outright. Give a hint, a strategy, or a way to think about it so they can get it themselves.
-- Be positive and reduce frustration ("You're close!", "Let's try a different way").
-- Plain text only: no markdown, no lists. At most one friendly emoji.`;
+- Make the help SPECIFIC to THIS exact question: point at what it is actually asking and give a concrete step, strategy, or way to reason that moves them toward the right answer. No generic pep talk.
+- Do NOT state the final answer outright. Guide them so they can reach it themselves.
+- Be positive and reduce frustration ("You're close!", "Let's try it a different way").
+- Plain text only: no markdown, no lists, and NO emojis.`;
 
   const user = `Subject${subj}: ${subjectName || "general"}
 Question: ${question || "(unknown)"}
 The child's wrong answer: ${userAnswer || "(blank)"}
 The correct answer (for your reference only — do NOT reveal it directly): ${correctAnswer || "(unknown)"}${optionsLine}
 
-Write the hint now.`;
+Write a specific, helpful hint for THIS question now.`;
 
   const { reply } = await chatCompletion({
     messages: [

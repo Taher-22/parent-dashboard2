@@ -20,6 +20,7 @@ router.get("/child/:childId/progress", async (req, res) => {
       aiHelpEnabled: true,
       aiHelpThreshold: true,
       aiHelpMode: true,
+      aiHelpDurationSec: true,
       subjects: {
         include: {
           subject: true,
@@ -61,6 +62,7 @@ router.get("/child/:childId/progress", async (req, res) => {
       enabled: child.aiHelpEnabled,
       threshold: child.aiHelpThreshold,
       mode: child.aiHelpMode,
+      durationSec: child.aiHelpDurationSec,
     },
     subjects: child.subjects
       .filter((progress) => !NON_LEARNING_SUBJECT_IDS.includes(progress.subjectId))
@@ -571,7 +573,7 @@ router.post("/child/:childId/ai-help", async (req, res) => {
       // Graceful fallback so the kid still gets something encouraging.
       source = "fallback";
       hint =
-        "Take a deep breath — you're doing great! Read the question one more time slowly, and rule out the choices you're sure are wrong first. You've got this! 🌟";
+        "Take a deep breath — you're doing great! Read the question one more time slowly, and rule out the choices you're sure are wrong first. You've got this!";
     } else {
       console.error("ai-help — generation failed:", err);
       return res.status(502).json({ error: "AI help generation failed", detail: err.detail || null });
@@ -580,7 +582,7 @@ router.post("/child/:childId/ai-help", async (req, res) => {
 
   if (!hint || !hint.trim()) {
     source = "fallback";
-    hint = "You're so close! Try reading the question again and think about what it's really asking. Give it another go! 💪";
+    hint = "You're so close! Try reading the question again and think about what it's really asking. Give it another go!";
   }
 
   // Log it so the parent can review what their child was shown.

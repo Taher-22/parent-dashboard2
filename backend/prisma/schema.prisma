@@ -53,6 +53,7 @@ model Child {
   aiHelpEnabled         Boolean  @default(true)
   aiHelpThreshold       Int      @default(3)        // X — number of mistakes that triggers a hint
   aiHelpMode            String   @default("streak") // "streak" = wrong in a row | "total" = wrong per play session
+  aiHelpDurationSec     Int      @default(15)       // how long the hint message stays on screen in-game
 
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)

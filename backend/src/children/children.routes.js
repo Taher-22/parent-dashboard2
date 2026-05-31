@@ -706,13 +706,14 @@ router.get("/:childId/ai-help-config", requireAuth, async (req, res) => {
   const { childId } = req.params;
   const child = await prisma.child.findFirst({
     where: { id: childId, parentId: req.user.id },
-    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true },
+    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true, aiHelpDurationSec: true },
   });
   if (!child) return res.status(404).json({ message: "Child not found" });
   res.json({
     aiHelpEnabled: child.aiHelpEnabled,
     aiHelpThreshold: child.aiHelpThreshold,
     aiHelpMode: child.aiHelpMode,
+    aiHelpDurationSec: child.aiHelpDurationSec,
   });
 });
 
@@ -722,10 +723,11 @@ router.get("/:childId/ai-help-config", requireAuth, async (req, res) => {
  * Body: { aiHelpEnabled?, aiHelpThreshold?, aiHelpMode? }
  *   aiHelpThreshold is clamped to 1..20
  *   aiHelpMode must be "streak" (wrong in a row) or "total" (wrong per session)
+ *   aiHelpDurationSec (how long the hint stays on screen) is clamped to 3..120
  */
 router.put("/:childId/ai-help-config", requireAuth, async (req, res) => {
   const { childId } = req.params;
-  const { aiHelpEnabled, aiHelpThreshold, aiHelpMode } = req.body ?? {};
+  const { aiHelpEnabled, aiHelpThreshold, aiHelpMode, aiHelpDurationSec } = req.body ?? {};
 
   const child = await prisma.child.findFirst({
     where: { id: childId, parentId: req.user.id },
@@ -745,11 +747,16 @@ router.put("/:childId/ai-help-config", requireAuth, async (req, res) => {
     }
     data.aiHelpMode = aiHelpMode;
   }
+  if (aiHelpDurationSec !== undefined) {
+    const n = parseInt(aiHelpDurationSec, 10);
+    if (Number.isNaN(n)) return res.status(400).json({ message: "aiHelpDurationSec must be a number" });
+    data.aiHelpDurationSec = Math.max(3, Math.min(120, n));
+  }
 
   const updated = await prisma.child.update({
     where: { id: childId },
     data,
-    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true },
+    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true, aiHelpDurationSec: true },
   });
   res.json(updated);
 });
