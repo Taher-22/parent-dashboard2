@@ -39,8 +39,10 @@ const NAV = [
 // Mobile bottom tab bar — primary destinations.
 const MOBILE_TABS = ["/overview", "/subjects", "/answers", "/reports", "/messages", "/ai"];
 
+// Direct-download URL for the game build (forces a download instead of the Drive preview page).
+// File: https://drive.google.com/file/d/1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-/view?usp=sharing
 const GAME_DOWNLOAD_URL =
-  "https://drive.google.com/file/d/1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-/view?usp=drive_link";
+  "https://drive.google.com/uc?export=download&id=1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-";
 
 const THEMES = [
   { id: "light",   icon: Sun      },
