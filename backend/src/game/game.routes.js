@@ -528,7 +528,7 @@ router.post("/child/:childId/ai-help", async (req, res) => {
 
   const child = await prisma.child.findUnique({
     where: { id: childId },
-    select: { id: true, displayName: true, aiHelpEnabled: true },
+    select: { id: true, displayName: true, parentId: true, aiHelpEnabled: true },
   });
   if (!child) return res.status(404).json({ error: "Child not found" });
 
@@ -606,7 +606,23 @@ router.post("/child/:childId/ai-help", async (req, res) => {
     // non-fatal — still return the hint
   }
 
-  res.json({ hint, eventId, model: source === "ai" ? "gpt-4o-mini" : null, source });
+  // Deliver the hint to the child as a normal inbox message — identical to a
+  // parent-sent message (same Message table, authored as the child's own
+  // parent), just written automatically by the AI. It surfaces in the exact
+  // same in-game inbox the parent's messages use.
+  let messageId = null;
+  try {
+    const msg = await prisma.message.create({
+      data: { content: hint, childId, parentId: child.parentId },
+      select: { id: true },
+    });
+    messageId = msg.id;
+  } catch (err) {
+    console.error("ai-help — failed to create child message:", err);
+    // non-fatal — still return the hint
+  }
+
+  res.json({ hint, eventId, messageId, model: source === "ai" ? "gpt-4o-mini" : null, source });
 });
 
 export default router;
