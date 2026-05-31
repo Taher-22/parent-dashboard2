@@ -16,7 +16,6 @@ const subjects = [
   { id: "astronomy", nameKey: "subject_astronomy", component: <Astronomy /> },
   { id: "math",      nameKey: "subject_math",      component: <Math />      },
   { id: "reading",   nameKey: "subject_reading",   component: <Reading />   },
-  { id: "science",   nameKey: "subject_science",   component: <Science />   },
   { id: "minigames", nameKey: "subject_minigames", component: <Minigames /> },
 ];
 

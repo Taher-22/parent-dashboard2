@@ -7,3 +7,7 @@ node_modules/
 # prisma
 /generated/prisma
 backend/prisma/dev.db
+
+# personal notes (creds, demo flow, etc.) — local only
+NOTES.md
+GAME_API.md
