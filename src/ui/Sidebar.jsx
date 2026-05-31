@@ -15,8 +15,9 @@ import {
   ListChecks,
 } from "lucide-react";
 
-// Google Drive landing page for the game build (opens Drive preview / download UI).
-const GAME_DOWNLOAD_URL = "https://drive.google.com/file/d/1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-/view?usp=drive_link";
+// Direct-download URL for the game build (forces a download instead of the Drive preview page).
+// File: https://drive.google.com/file/d/1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-/view?usp=sharing
+const GAME_DOWNLOAD_URL = "https://drive.google.com/uc?export=download&id=1-Jw6_oB2W9yfrb4hVEGsaD4s1k10qxe-";
 import { useState } from "react";
 import { useChildren } from "../state/ChildrenContext.jsx";
 
