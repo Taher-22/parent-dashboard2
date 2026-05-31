@@ -698,4 +698,81 @@ router.get("/:childId/messages", requireAuth, async (req, res) => {
   res.json(messages);
 });
 
+/**
+ * GET /api/children/:childId/ai-help-config
+ * Read the in-game AI-help settings for a child.
+ */
+router.get("/:childId/ai-help-config", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true },
+  });
+  if (!child) return res.status(404).json({ message: "Child not found" });
+  res.json({
+    aiHelpEnabled: child.aiHelpEnabled,
+    aiHelpThreshold: child.aiHelpThreshold,
+    aiHelpMode: child.aiHelpMode,
+  });
+});
+
+/**
+ * PUT /api/children/:childId/ai-help-config
+ * Update the in-game AI-help settings.
+ * Body: { aiHelpEnabled?, aiHelpThreshold?, aiHelpMode? }
+ *   aiHelpThreshold is clamped to 1..20
+ *   aiHelpMode must be "streak" (wrong in a row) or "total" (wrong per session)
+ */
+router.put("/:childId/ai-help-config", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const { aiHelpEnabled, aiHelpThreshold, aiHelpMode } = req.body ?? {};
+
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+  if (!child) return res.status(404).json({ message: "Child not found" });
+
+  const data = {};
+  if (typeof aiHelpEnabled === "boolean") data.aiHelpEnabled = aiHelpEnabled;
+  if (aiHelpThreshold !== undefined) {
+    const n = parseInt(aiHelpThreshold, 10);
+    if (Number.isNaN(n)) return res.status(400).json({ message: "aiHelpThreshold must be a number" });
+    data.aiHelpThreshold = Math.max(1, Math.min(20, n));
+  }
+  if (aiHelpMode !== undefined) {
+    if (aiHelpMode !== "streak" && aiHelpMode !== "total") {
+      return res.status(400).json({ message: 'aiHelpMode must be "streak" or "total"' });
+    }
+    data.aiHelpMode = aiHelpMode;
+  }
+
+  const updated = await prisma.child.update({
+    where: { id: childId },
+    data,
+    select: { aiHelpEnabled: true, aiHelpThreshold: true, aiHelpMode: true },
+  });
+  res.json(updated);
+});
+
+/**
+ * GET /api/children/:childId/ai-help
+ * Recent AI-help events (hints shown to the child after the mistake threshold),
+ * newest first. Query: limit (default 30, max 100).
+ */
+router.get("/:childId/ai-help", requireAuth, async (req, res) => {
+  const { childId } = req.params;
+  const child = await prisma.child.findFirst({
+    where: { id: childId, parentId: req.user.id },
+  });
+  if (!child) return res.status(404).json({ message: "Child not found" });
+
+  const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+  const events = await prisma.aiHelpEvent.findMany({
+    where: { childId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  res.json({ items: events });
+});
+
 export default router;

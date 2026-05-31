@@ -126,6 +126,31 @@ export async function askAI({ messages, childId, subjectId }) {
   });
 }
 
+/* =========================
+   IN-GAME AI HELP (after X mistakes)
+========================= */
+
+export async function getAiHelpConfig(childId) {
+  return request(`/api/children/${childId}/ai-help-config`, {
+    headers: authHeaders(),
+  });
+}
+
+/** data: { aiHelpEnabled?, aiHelpThreshold?, aiHelpMode? } */
+export async function updateAiHelpConfig(childId, data) {
+  return request(`/api/children/${childId}/ai-help-config`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAiHelpHistory(childId, limit = 30) {
+  return request(`/api/children/${childId}/ai-help?limit=${limit}`, {
+    headers: authHeaders(),
+  });
+}
+
 /** body: { coins: absoluteValue } or { delta: relativeChange } */
 export async function setChildCoins(childId, body) {
   return request(`/api/children/${childId}/coins`, {

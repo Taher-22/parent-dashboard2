@@ -49,6 +49,11 @@ model Child {
   forceStopped          Boolean  @default(false)
   forceStoppedAt        DateTime?
 
+  // AI in-game help — after X mistakes the game asks the backend (OpenAI) for a kid-friendly hint.
+  aiHelpEnabled         Boolean  @default(true)
+  aiHelpThreshold       Int      @default(3)        // X — number of mistakes that triggers a hint
+  aiHelpMode            String   @default("streak") // "streak" = wrong in a row | "total" = wrong per play session
+
   parentId      String
   parent        Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
@@ -59,6 +64,7 @@ model Child {
   sessions      Session[]
   answers       AnswerRecord[]
   scores        ScoreRecord[]
+  aiHelpEvents  AiHelpEvent[]
 
   createdAt     DateTime @default(now())
 }
@@ -237,4 +243,27 @@ model ScoreRecord {
 
   @@index([childId, createdAt])
   @@index([childId, subjectId, createdAt])
+}
+
+/// One row per time the game triggered AI help after the child hit the mistake
+/// threshold. Stores the question + wrong answer that prompted it and the hint
+/// the AI generated, so the parent can review what their child was shown.
+model AiHelpEvent {
+  id            String   @id @default(cuid())
+
+  childId       String
+  child         Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  subjectId     String?
+  question      String?  @db.Text
+  userAnswer    String?  @db.Text
+  correctAnswer String?  @db.Text
+  options       Json?
+  mode          String?  // "streak" | "total" — which counter tripped
+  triggerCount  Int?     // the streak/total value at trigger time
+  hint          String   @db.Text
+
+  createdAt     DateTime @default(now())
+
+  @@index([childId, createdAt])
 }

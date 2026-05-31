@@ -1,5 +1,6 @@
 import express from "express";
 import prisma from "../db/prisma.js";
+import { generateChildHint } from "../ai/openai.js";
 
 const router = express.Router();
 
@@ -16,6 +17,9 @@ router.get("/child/:childId/progress", async (req, res) => {
       lastSeenAt: true,
       currentSubjectId: true,
       forceStopped: true,
+      aiHelpEnabled: true,
+      aiHelpThreshold: true,
+      aiHelpMode: true,
       subjects: {
         include: {
           subject: true,
@@ -53,6 +57,11 @@ router.get("/child/:childId/progress", async (req, res) => {
     lastSeenAt: child.lastSeenAt,
     currentSubjectId: child.currentSubjectId,
     forceStopped: child.forceStopped,
+    aiHelp: {
+      enabled: child.aiHelpEnabled,
+      threshold: child.aiHelpThreshold,
+      mode: child.aiHelpMode,
+    },
     subjects: child.subjects
       .filter((progress) => !NON_LEARNING_SUBJECT_IDS.includes(progress.subjectId))
       .map((progress) => ({
@@ -496,6 +505,108 @@ router.post("/child/:childId/session", async (req, res) => {
     },
     lifetimeSessions,
   });
+});
+
+/**
+ * POST /api/game/child/:childId/ai-help
+ * The game calls this once the child has hit the mistake threshold (X wrong
+ * answers — in a row or per session, configured by the parent in the dashboard).
+ * The backend asks OpenAI for a short, kid-friendly hint about the question
+ * they're stuck on (without giving away the answer), logs it, and returns it so
+ * the game can show it to the child right away.
+ *
+ * Body: { subjectId?, question, userAnswer?, correctAnswer?, options?, mode?, count? }
+ * Response: { hint, eventId, model, source }
+ */
+router.post("/child/:childId/ai-help", async (req, res) => {
+  const { childId } = req.params;
+  const { subjectId, question, userAnswer, correctAnswer, options, mode, count } = req.body ?? {};
+
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "question is required" });
+  }
+
+  const child = await prisma.child.findUnique({
+    where: { id: childId },
+    select: { id: true, displayName: true, aiHelpEnabled: true },
+  });
+  if (!child) return res.status(404).json({ error: "Child not found" });
+
+  // Respect the parent's master switch even if the game asks anyway.
+  if (child.aiHelpEnabled === false) {
+    return res.status(403).json({ error: "AI help is disabled for this child" });
+  }
+
+  // Resolve a friendly subject name if we can.
+  let subjectName = null;
+  if (subjectId) {
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      select: { name: true },
+    });
+    subjectName = subject?.name || null;
+  }
+
+  // Sanitize options into a string[] (mirrors /answer).
+  let optionsJson = null;
+  if (Array.isArray(options)) {
+    const clean = options.filter((x) => x != null).map((x) => String(x)).filter((x) => x.length > 0);
+    if (clean.length > 0) optionsJson = clean;
+  }
+
+  let hint;
+  let model = null;
+  let source = "ai";
+  try {
+    hint = await generateChildHint({
+      displayName: child.displayName,
+      subjectName,
+      question,
+      userAnswer,
+      correctAnswer,
+      options: optionsJson,
+    });
+  } catch (err) {
+    if (err.code === "NO_KEY") {
+      // Graceful fallback so the kid still gets something encouraging.
+      source = "fallback";
+      hint =
+        "Take a deep breath — you're doing great! Read the question one more time slowly, and rule out the choices you're sure are wrong first. You've got this! 🌟";
+    } else {
+      console.error("ai-help — generation failed:", err);
+      return res.status(502).json({ error: "AI help generation failed", detail: err.detail || null });
+    }
+  }
+
+  if (!hint || !hint.trim()) {
+    source = "fallback";
+    hint = "You're so close! Try reading the question again and think about what it's really asking. Give it another go! 💪";
+  }
+
+  // Log it so the parent can review what their child was shown.
+  let eventId = null;
+  try {
+    const event = await prisma.aiHelpEvent.create({
+      data: {
+        childId,
+        subjectId: subjectId || null,
+        question: question || null,
+        userAnswer: userAnswer || null,
+        correctAnswer: correctAnswer || null,
+        options: optionsJson,
+        mode: typeof mode === "string" ? mode : null,
+        triggerCount: typeof count === "number" ? Math.round(count) : null,
+        hint,
+      },
+      select: { id: true },
+    });
+    eventId = event.id;
+  } catch (err) {
+    console.error("ai-help — failed to log event:", err);
+    // non-fatal — still return the hint
+  }
+
+  res.json({ hint, eventId, model: source === "ai" ? "gpt-4o-mini" : null, source });
 });
 
 export default router;

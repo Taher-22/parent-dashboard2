@@ -1,4 +1,5 @@
 import ChatPanel from "../ui/ChatPanel.jsx";
+import AiHelpSettings from "../ui/AiHelpSettings.jsx";
 import { useLang } from "../i18n/LangContext.jsx";
 
 export default function AIChat() {
@@ -9,6 +10,7 @@ export default function AIChat() {
         <div className="text-3xl font-extrabold tracking-tight">{t("ai_title")}</div>
         <div className="opacity-75 mt-1"></div>
       </div>
+      <AiHelpSettings />
       <ChatPanel />
     </div>
   );
